@@ -45,3 +45,16 @@ Next: **Wave 1 design round** — card mock to award-bar standard + name
 shortlist, Yose reacts by screenshot. Engine code only after design lands.
 
 Needs-from-Yose right now: nothing blocking. Ledger lives in NORTH-STAR.
+
+## 2026-07-05 (night) — Sidang Desain 01 shipped
+
+Design round 01 published as an artifact (docs/design/round-01.html, fonts
+embedded OFL woff2, fully self-contained): Nona Aksara's first pixel
+portrait (24x28, sanggul + kunyit pen, kebaya tinta with kutubaru), the
+Tinta & Kopi palette (6 tokens), Press Start 2P + VT323 type pairing, the
+persona card mock (Yose as demo, CONTOH stamp, receipts under every stat,
+kopi counter in the colophon), and three directions: A Percetakan Malam
+(recommended — world dark warm wood, printed artifacts carry the light),
+B Kertas Siang (paper world, ink voice), C Arkade CRT (arcade night,
+riskiest). Signature interaction mocked: Nona's typewriter dialogue +
+thought-bubble recap. Awaiting Yose screenshot reactions.
