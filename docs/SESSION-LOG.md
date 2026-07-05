@@ -58,3 +58,24 @@ kopi counter in the colophon), and three directions: A Percetakan Malam
 B Kertas Siang (paper world, ink voice), C Arkade CRT (arcade night,
 riskiest). Signature interaction mocked: Nona's typewriter dialogue +
 thought-bubble recap. Awaiting Yose screenshot reactions.
+
+## 2026-07-05 (late night) — Proto Warung 01: the world is walkable
+
+Yose reacted to Sidang Desain 01: loves the aesthetics/direction; asked for
+a walkable side-view warung scene instead of a page ("people walking in to
+a shop"), and whether a light lib is needed. Answer shipped as a PLAYABLE
+prototype (docs/design/proto-warung-01.html + phone copy): 320x180 canvas,
+zero libraries, vanilla rAF loop — night warung interior (window w/ moon,
+stars, skyline; shelf jars; menu board; flickering hanging lamp; patron w/
+steaming cup), full-body player sprite with 2-frame walk + flip, touch
+(hold ◀ ▶) + keyboard controls, proximity-triggered BICARA with Nona Aksara
+behind the bar, 3-line typewriter dialogue, kopi counter in HUD,
+reduced-motion respected. Yose mid-build recap confirmed the core loop:
+curhat at the bar → Nona retells → the retelling IS the playable story.
+Also fixed: round-01 mojibake (missing <meta charset=utf-8> when opened as
+local file — artifact wrapper adds it, local copies must carry their own).
+Lib verdict logged: vanilla canvas for world; anime/gsap = DOM tweeners
+(UI-only, later, maybe); three.js = WebGL 3D, against doctrine; if scenes
+multiply → Kaplay/Kontra/LittleJS from the assets cookbook.
+Delivery convention while laptop is serviced: every visual lands in
+/mnt/internal-storage as a self-contained HTML.
