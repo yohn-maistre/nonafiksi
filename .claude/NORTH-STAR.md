@@ -34,6 +34,12 @@ and in-fiction she is the presskeeper and witness, never the author.
    items, bio in game-voice. Card = your link-in-bio page at `site/@handle`
    = your playable character = the OG share image. **One persona JSON, four
    renderings — one fact, one owner.**
+   **Persona WORLD (Yose, 2026-07-06):** the card grows into a place —
+   everyone gets their own small world (a street, a kampung, a shore),
+   assembled by agents from the zone/component template library, stitched
+   with their stories, and editable later. Editing = editing the world
+   manifest (move a building, rename a shop, add a zone), never raw pixels.
+   Worlds GROW as their owner presses more stories — density over size.
 2. **Story Press** — Nona Aksara interviews you (characters, decision
    points, place, stakes — a tabletop-GM session), recaps ("so your story
    goes something like this…"), and the thought-bubble opens on your

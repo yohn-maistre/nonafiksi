@@ -79,3 +79,34 @@ Lib verdict logged: vanilla canvas for world; anime/gsap = DOM tweeners
 multiply → Kaplay/Kontra/LittleJS from the assets cookbook.
 Delivery convention while laptop is serviced: every visual lands in
 /mnt/internal-storage as a self-contained HTML.
+
+## 2026-07-06 (small hours) — Proto Jalan Kisah + persona worlds + asset haul
+
+Yose reacted to proto-01 running on his phone (loved it) with reference
+screenshots (2x Eastward streets + a pixel-moods collage — saved to
+docs/design/references/) and two direction shifts, both adopted:
+(1) top-down 3/4 view instead of side-view — also solves the portrait-phone
+dead-space his screenshot revealed; (2) "everyone gets their own world":
+agents assemble each user's world from zone/component templates, stitched
+with their stories, editable later (manifest edits, never pixels) — written
+into NORTH-STAR under Persona Forge as Persona World. Grounding recorded:
+Eastward is dense scene-based, NOT open world — our model is the "open
+neighborhood" that grows; density over size.
+
+Shipped proto-02 (docs/design/proto-jalan-kisah-01.html + phone copy):
+portrait-native 180x320 canvas, top-down night street "Jalan Kisah" —
+4-dir walking w/ collision, camera follow, warung facade + door with scene
+transition into the bar interior, depth-sorted entities, bunting, lamp glow
+pools, fireflies, cat on crate, 2 NPCs, Nona + dialogue inside. Still zero
+libraries, ~500 lines.
+
+Asset scout returned (docs/research/topdown-assets-cookbook.md, licenses
+QUOTED with URLs): foundation = Ninja Adventure pack (CC0 incl. commercial,
+East-Asian town/village/interiors/water + 50 NPCs + music); Kenney RPG
+Urban + Roguelike City (CC0); OGA farming crops CC0 with RICE, CASSAVA,
+COFFEE; forest + beach CC0 picks; LimeZu Serene Village CC-BY (one credit
+line). DO-NOT-USE list: Sprout Lands free (non-commercial), Cainos/PIPOYA
+(fine in-game, forbidden in public repos). AI-generated asset sites:
+AVOID — license claims unbacked (AI output likely uncopyrightable, no
+provenance); CC0 haul makes them unnecessary. Plan: palette-remap ingestion
+(quantize all imports to Tinta & Kopi ramp) = style coherence across packs.
