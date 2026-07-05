@@ -3,6 +3,20 @@
 Written for a reader with amnesia. Each entry: what happened, what's true
 now, what's next.
 
+## 2026-07-05 (later) — Name confirmed; Nona Aksara; warungs are presses
+
+Yose confirmed **NonaFiksi** as the product name and overturned (correctly)
+the blanket Aksara-separation rule: the presskeeper character is **Nona
+Aksara** — same Aksara at every warung press in the world, personification
+of writing, communal-AI thesis in-world. Two guardrails hold: she's never
+marketing copy (found, not advertised), and in-fiction she's presskeeper/
+witness, never author (authorship = the teller; insulates her and the name
+from all story content incl. the satire). Also decided: **warung SMB tier
+= open your own story press** — patronage colophon + hub presence + venue
+are one product ("buka warung, buka percetakan"); community presses same
+mechanic. Constitution updated accordingly. Next unchanged: Wave-1 design
+round, now including Nona Aksara's visual identity.
+
 ## 2026-07-05 — Conception day: brainstorm → constitution → repo
 
 Four-turn brainstorm (Yose × Claude Fable) went from "what SaaS could sell

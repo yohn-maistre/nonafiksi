@@ -6,14 +6,24 @@ where we actually are; this file says where we're going and what never bends.
 
 ## The one-liner
 
-**A story press.** An agent (Nona) interviews you — about your links, your
-life, your warung — and presses the answers into a playable, shareable
-pixel-RPG artifact. Your bio page is a character card; your journey is a
-playable story; both live in one world with a warung at its center.
+**A story press.** An agent interviews you — about your links, your life,
+your warung — and presses the answers into a playable, shareable pixel-RPG
+artifact. Your bio page is a character card; your journey is a playable
+story; both live in one world with a warung at its center.
 
-The name is the thesis: **Nona Fiksi** ("Miss Fiction") reads as *nonfiksi*
-(non-fiction) — real stories, pressed through a fiction machine. Works in
-English ears too ("nona-fiction"). NAME PENDING-YOSE (see ledger).
+The name is the thesis: **NonaFiksi** ("Nona Fiksi" = Miss Fiction) reads
+as *nonfiksi* (non-fiction) — real stories, pressed through a fiction
+machine. Works in English ears too ("nona-fiction").
+**NAME CONFIRMED by Yose, 2026-07-05.**
+
+**The character: Nona Aksara** (decided 2026-07-05). The interviewer/
+presskeeper — the nona of NonaFiksi — is named Aksara ("script"): the
+woman who writes your story down is named Script herself. She is the SAME
+Aksara at every warung press in the world; the fiction never explains
+this. One keeper of every press = the personification of writing = the
+communal-AI thesis, in-world. Two guardrails that make this safe (see
+Brand rules): she is discovered in-world, never used as marketing copy;
+and in-fiction she is the presskeeper and witness, never the author.
 
 ## What it is (the five organs)
 
@@ -24,11 +34,11 @@ English ears too ("nona-fiction"). NAME PENDING-YOSE (see ledger).
    items, bio in game-voice. Card = your link-in-bio page at `site/@handle`
    = your playable character = the OG share image. **One persona JSON, four
    renderings — one fact, one owner.**
-2. **Story Press** — Nona interviews you (characters, decision points,
-   place, stakes — a tabletop-GM session), recaps ("so your story goes
-   something like this…"), and the thought-bubble opens on your finished
-   playable story. **Signature interaction: the recap → thought-bubble
-   reveal.** Stories compile to JSON manifests (scenes, branches, text,
+2. **Story Press** — Nona Aksara interviews you (characters, decision
+   points, place, stakes — a tabletop-GM session), recaps ("so your story
+   goes something like this…"), and the thought-bubble opens on your
+   finished playable story. **Signature interaction: the recap →
+   thought-bubble reveal.** Stories compile to JSON manifests (scenes, branches, text,
    components from the shared library). **A story is data, never code.**
    Users compose from existing components like LEGO — coherent style for
    free, KB-scale storage, one renderer plays everything.
@@ -66,11 +76,20 @@ English ears too ("nona-fiction"). NAME PENDING-YOSE (see ledger).
   art (never stock "tribal" packs — stereotype trap), honest framing
   ("a dramatization based on…"). Honai imagery reserved for Papuan
   content, never generic decoration.
-- **Brand separation**: the Aksara name (PT Abstraksi civic project,
-  government-facing) stays OFF this product's public brand — oligarch
-  satire must never splash on the Nabire track. Quiet bridge only: the
-  story-manifest format may be called `.aksara` (the script that carries
-  stories) — PENDING-YOSE.
+- **Brand rules for the Aksara name** (revised 2026-07-05 — Yose's call,
+  and the right one): Aksara lives INSIDE the world as the presskeeper
+  character and the `.aksara` manifest format; the public brand stays
+  NonaFiksi. Two hard guardrails: (1) "Aksara" never appears in marketing
+  copy, store listings, or headlines for this product — she is found, not
+  advertised; the civic project (PT Abstraksi, government-facing) keeps
+  the public use of the name. (2) In-fiction, Aksara is the presskeeper
+  and witness, NEVER the author — every story is authored by its teller
+  (flagships by us, user stories by users); she only writes down what she
+  is told. This insulates her (and the name) from any story's content,
+  including the oligarch satire, and mirrors the real liability line:
+  authorship belongs to the teller. Played right, the game warmly teaches
+  Indonesia what "aksara" means before the civic product ever ships —
+  the bridge flows the good direction.
 
 ## Sponsorship / warung tier (the ads answer)
 
@@ -86,6 +105,12 @@ world, never to interrupt it. No billboards.
    square; their shop-NPC grounded in their real menu/hours/prices
    (klerk-style citation guardrails) — this IS the SMB warung tier, and
    quietly an Aksara-pattern demo (first-layer service NPC).
+   **Warung tier = open your own press** (decided 2026-07-05): an SMB's
+   warung isn't just a place, it's a story VENUE — stories pressed there
+   carry its patronage colophon ("dicetak di Warung X") natively, and the
+   same Nona Aksara keeps their press. Patronage + presence + venue
+   collapse into ONE product: "buka warung, buka percetakan." Community
+   presses (a kampung, a campus, a newsroom) are the same mechanic.
 4. **NEVER inject sponsors into user stories** (consent/control: no brand
    cameo in someone's breakup story). Curated flagship cameos only, with
    sponsor sign-off.
@@ -135,10 +160,11 @@ world, never to interrupt it. No billboards.
 
 ## Ledger — needs-from-Yose (in order; keys/signups LAST)
 
-1. Name verdict (NonaFiksi recommended; also on the table: Catatan
-   Terpinggir homage, Kisah/Warung Kisah; Aksara reserved for civic;
-   Fable collides with the Xbox RPG franchise trademark — dropped).
-2. React to Wave-1 card mock + design round (screenshots).
+1. ~~Name verdict~~ **RESOLVED 2026-07-05: NonaFiksi confirmed; character
+   is Nona Aksara** (runners-up logged: Catatan Terpinggir → candidate
+   flagship-story title; Fable dropped — Xbox RPG trademark).
+2. React to Wave-1 card mock + design round (screenshots) — Nona Aksara's
+   visual identity is now part of this round.
 3. Payment rail confirmation: Mayar signup (verify perorangan onboarding
    fine print), domain choice.
 4. Editorial review of first public stories (Wave 4).
@@ -152,7 +178,8 @@ world, never to interrupt it. No billboards.
   never paywall the paper itself).
 - Aksara crossover: warung-tier NPC as CARE-as-Code demo surface.
 - Voice tier (Google AI Studio live voice as premium "talk to the NPC").
-- `.aksara` manifest extension naming.
+- ~~`.aksara` manifest extension naming~~ → adopted 2026-07-05 (named
+  after her; format spec itself still to be designed in Wave 2).
 - Domain availability check (with rail decision).
 - Flagship story titles (Catatan-Pinggir-flavored title for the oligarch
   chapter?).
