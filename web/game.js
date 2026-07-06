@@ -5,6 +5,21 @@
 (function(){
 const wire = (api)=>{
   const S = api.scenes();
+  const $ = id=>document.getElementById(id);
+
+  // ---- title screen wiring ----
+  api.state.playerSheet = localStorage.nf_char||'boy';
+  if(api.persona.get()) $('bLanjut').style.display='block';
+  $('bMulai').onpointerdown = e=>{ e.preventDefault();
+    $('tbtns').style.display='none'; $('chsel').style.display='flex'; };
+  document.querySelectorAll('.chcard').forEach(c=>c.onpointerdown=e=>{ e.preventDefault();
+    localStorage.nf_char=c.dataset.k; api.state.playerSheet=c.dataset.k;
+    api.begin('warung',72,224); });
+  $('bLanjut').onpointerdown = e=>{ e.preventDefault(); api.begin('rumah',72,190); };
+  $('bKredit').onpointerdown = e=>{ e.preventDefault(); api.popup({title:'KREDIT & SUMBER',
+    body:'Aset pixel: Cozy Farm, Ninja Adventure, Kenney, dkk — semua CC0; '+
+      'daftar lengkap per berkas di repo (web/assets/SUMBER.md). Font: Press Start 2P '+
+      '& VT323 (OFL). Semua tokoh cerita adalah fiksi komposit. Dicetak hangat. ☕'}); };
   const doorMenu = ()=>api.runScript([{say:"Mau ke mana?",choices:[
     {label:"Jalan Kenangan",then:()=>{api.closeDlg();api.goto('street',72,110);}},
     {label:"Dunia kisah lain",locked:true,lockedMsg:"Peta dunia menyusul. ✦"}]}]);

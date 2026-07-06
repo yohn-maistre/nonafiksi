@@ -91,7 +91,8 @@ function loadSheets(srcMap) {
 
 // ---------- state ----------
 const st = { scene:null, x:0, y:0, dir:'down', frame:0, ft:0, moving:false,
-  fading:false, phaseOverride:null, dlg:null, kopi:3 };
+  fading:false, phaseOverride:null, dlg:null, kopi:3,
+  mode:'play', jx:0, jy:0, hidePlayer:false, playerSheet:'boy' };
 const persona = { get(){ try{return JSON.parse(localStorage.nf_persona||'null');}catch(e){return null;} },
   set(p){ localStorage.nf_persona = JSON.stringify(p); } };
 
@@ -208,7 +209,7 @@ function drawScene(sc,t){
   });
   (sc.fx||[]).forEach(f=>FX[f.type]&&FX[f.type](f,t));
   ents.filter(e=>e.y<=st.y).sort((a,b)=>a.y-b.y).forEach(e=>e.draw());
-  drawChar(st.playerSheet||'boy',st.x,st.y,st.dir,st.moving?st.frame:0);
+  if(!st.hidePlayer)drawChar(st.playerSheet||'boy',st.x,st.y,st.dir,st.moving?st.frame:0);
   ents.filter(e=>e.y>st.y).sort((a,b)=>a.y-b.y).forEach(e=>e.draw());
 }
 
@@ -248,7 +249,10 @@ function stepDlg(){
 function advDlg(){ const d=st.dlg; if(!d)return;
   const s=d.script[d.i];
   if(d.typed<d.text.length){ d.typed=d.text.length; ui.dtxt.textContent=d.text; return; }
-  if(s.choices)return; // must pick
+  if(s.choices){ // choices + free-typed input can coexist (Yose: "ketik sendiri")
+    if(s.input){ const v=ui.dinput.value.trim();
+      if(v){ (s.onfree||(()=>{}))(v); if(st.dlg===d){d.i++;stepDlg();} } }
+    return; }
   if(s.input){ const v=ui.dinput.value.trim(); if(!v)return ui.dinput.focus();
     (s.oninput||(()=>{}))(v); }
   if(s.action)s.action();
@@ -287,9 +291,26 @@ function generateHome(p){
 // ---------- input ----------
 const keys={};
 function bindUI(){
-  document.querySelectorAll('.btn').forEach(b=>{ const k=b.dataset.k;
-    b.addEventListener('pointerdown',e=>{e.preventDefault();keys[k]=true;});
-    ['pointerup','pointerleave','pointercancel'].forEach(ev=>b.addEventListener(ev,()=>keys[k]=false)); });
+  // floating thumb joystick — spawns faint at the touch point, whole screen is the pad
+  const scr=document.querySelector('.screen'); let joyId=null,jcx=0,jcy=0;
+  scr.addEventListener('pointerdown',e=>{
+    if(st.mode!=='play'||st.dlg||ui.pop.classList.contains('on')||joyId!==null)return;
+    if(e.target!==cvs&&e.target!==scr)return;
+    e.preventDefault(); joyId=e.pointerId; jcx=e.clientX; jcy=e.clientY;
+    const r=scr.getBoundingClientRect();
+    ui.joy.style.left=(jcx-r.left-38)+'px'; ui.joy.style.top=(jcy-r.top-38)+'px';
+    ui.joy.style.display='block'; ui.jnub.style.left='21px'; ui.jnub.style.top='21px';
+    try{scr.setPointerCapture(e.pointerId);}catch(err){} });
+  scr.addEventListener('pointermove',e=>{
+    if(e.pointerId!==joyId)return;
+    let dx=e.clientX-jcx, dy=e.clientY-jcy; const m=Math.hypot(dx,dy);
+    if(m>28){dx*=28/m;dy*=28/m;}
+    ui.jnub.style.left=(21+dx)+'px'; ui.jnub.style.top=(21+dy)+'px';
+    st.jx=Math.abs(dx)<6?0:dx/28; st.jy=Math.abs(dy)<6?0:dy/28; });
+  const jend=e=>{ if(e.pointerId!==joyId)return;
+    joyId=null; st.jx=st.jy=0; ui.joy.style.display='none'; };
+  scr.addEventListener('pointerup',jend); scr.addEventListener('pointercancel',jend);
+  ui.dclose.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();closeDlg();});
   const KM={ArrowLeft:'L',a:'L',ArrowRight:'R',d:'R',ArrowUp:'U',w:'U',ArrowDown:'D',s:'D'};
   addEventListener('keydown',e=>{ if(document.activeElement===ui.dinput){ if(e.key==='Enter')advDlg(); return; }
     if(KM[e.key]){e.preventDefault();keys[KM[e.key]]=true;}
@@ -304,6 +325,7 @@ function bindUI(){
     ui.phasebtn.textContent=(st.phaseOverride||'auto').toUpperCase()+' ✦'; });
 }
 function act(){
+  if(st.mode!=='play')return;
   if(st.dlg){advDlg();return;}
   if(ui.pop.classList.contains('on')){ui.pop.classList.remove('on');return;}
   const sc=SCENES[st.scene];
@@ -320,11 +342,21 @@ function loop(t){
   const dt=Math.min(32,t-last)/1000; last=t;
   if(!READY){requestAnimationFrame(loop);return;}
   const sc=SCENES[st.scene];
+  if(st.mode==='title'){ // attract: slow camera drift over the street, no player
+    const camY=(Math.sin(t/12000)*.5+.5)*Math.max(0,sc.H-256);
+    X.setTransform(1,0,0,1,0,0); X.clearRect(0,0,144,256); X.translate(0,-camY);
+    drawScene(sc,t); X.setTransform(1,0,0,1,0,0);
+    const tov=OVERLAY[phase()]; if(tov){X.fillStyle=tov;X.fillRect(0,0,144,256);}
+    ui.chprevs.forEach(c=>{ const g=c.getContext('2d'); g.imageSmoothingEnabled=false;
+      g.clearRect(0,0,16,16); g.drawImage(img(c.dataset.k),0,((t/200|0)%4)*16,16,16,0,0,16,16); });
+    requestAnimationFrame(loop); return; }
   st.moving=false;
   if(!st.dlg&&!st.fading&&!ui.pop.classList.contains('on')){
-    let dx=(keys.R?1:0)-(keys.L?1:0),dy=(keys.D?1:0)-(keys.U?1:0);
-    if(dx&&dy){dx*=.72;dy*=.72;}
-    if(dx||dy){st.moving=true;
+    let dx=(keys.R?1:0)-(keys.L?1:0)+st.jx, dy=(keys.D?1:0)-(keys.U?1:0)+st.jy;
+    const mag=Math.hypot(dx,dy); if(mag>1){dx/=mag;dy/=mag;}
+    if(Math.abs(dx)>.05||Math.abs(dy)>.05){st.moving=true;
+      if(ui.hint.classList.contains('on')){ui.hint.classList.remove('on');
+        try{localStorage.nf_hint=1;}catch(e){}}
       st.dir=Math.abs(dy)>=Math.abs(dx)?(dy>0?'down':'up'):(dx>0?'right':'left');
       const nx=Math.max(8,Math.min(sc.W-8,st.x+dx*56*dt)),
             ny=Math.max(12,Math.min(sc.H-3,st.y+dy*56*dt));
@@ -351,15 +383,25 @@ function loop(t){
 async function init(bundle){
   CATALOG=bundle.catalog; SCENES=bundle.scenes;
   cvs=document.getElementById('cv'); X=cvs.getContext('2d'); X.imageSmoothingEnabled=false;
-  ['loc','ctx','dlg','who','dtxt','dinput','dchoices','fade','pop','ptitle','pbody','plink','pclose','phasebtn']
+  ['loc','ctx','dlg','who','dtxt','dinput','dchoices','fade','pop','ptitle','pbody','plink','pclose',
+   'phasebtn','joy','jnub','hint','title','dclose']
     .forEach(id=>ui[id]=document.getElementById(id));
+  ui.chprevs=[...document.querySelectorAll('.chprev')];
   Object.entries(MAPS).forEach(([k,m])=>A.custom[k]=spr(m));
   await loadSheets(bundle.sheets);
   bundle.wire(api); // scenes get their scripts (onTalk, onMenu, first-visit)
   st.scene=bundle.start; ui.loc.textContent=SCENES[st.scene].name;
   st.x=SCENES[st.scene].spawn[0]; st.y=SCENES[st.scene].spawn[1];
+  st.mode='title'; st.hidePlayer=true; ui.title.classList.add('on');
+  ui.loc.textContent='NONAFIKSI';
   bindUI(); READY=true; requestAnimationFrame(loop); }
 
-const api={ init,goto,runScript,popup,closeDlg,persona,generateHome,
+// leave the title screen and enter the world
+function begin(name,sx,sy){
+  ui.title.classList.remove('on'); st.mode='play'; st.hidePlayer=false;
+  goto(name,sx,sy);
+  if(!localStorage.nf_hint)ui.hint.classList.add('on'); }
+
+const api={ init,goto,begin,runScript,popup,closeDlg,persona,generateHome,
   scenes:()=>SCENES,state:st,phase };
 return api; })();

@@ -14,24 +14,60 @@ body{font-family:'VT323',monospace;color:var(--kertas);display:flex;flex-directi
 .hud b{color:var(--kunyit);font-weight:normal}
 #phasebtn{cursor:pointer;border:2px solid var(--kayu2);padding:4px 6px;background:var(--kayu);color:var(--kunyit)}
 .screen{position:relative;flex:1;display:flex;align-items:center;justify-content:center;min-height:0}
-canvas{image-rendering:pixelated;image-rendering:crisp-edges;
-  height:min(calc(100vh - 150px), calc((100vw - 10px) * 256 / 144));
+canvas{image-rendering:pixelated;image-rendering:crisp-edges}
+#cv{height:min(calc(100vh - 128px), calc((100vw - 10px) * 256 / 144));
   border:3px solid var(--kayu2);box-shadow:0 0 0 3px #000,0 10px 40px rgba(0,0,0,.6);background:#000}
 .fade{position:absolute;inset:0;background:#000;opacity:0;pointer-events:none;transition:opacity .22s}
 .fade.on{opacity:1}
+/* thumb joystick — faint, spawns where the thumb lands */
+#joy{position:absolute;width:76px;height:76px;border-radius:50%;display:none;pointer-events:none;
+  border:2px solid rgba(242,232,213,.22);background:rgba(242,232,213,.05)}
+#jnub{position:absolute;width:30px;height:30px;border-radius:50%;
+  background:rgba(242,232,213,.22);border:2px solid rgba(242,232,213,.3)}
+#hint{position:absolute;inset:0;display:none;align-items:flex-end;justify-content:center;
+  pointer-events:none;padding-bottom:56px}
+#hint.on{display:flex}
+#hint .hcard{font-family:'PS2P',monospace;font-size:8px;color:var(--kertas);text-align:center;
+  background:rgba(26,18,13,.85);border:2px solid var(--kayu2);padding:10px 12px;line-height:1.9;
+  animation:hpulse 1.6s ease-in-out infinite}
+#hint .hring{display:block;width:34px;height:34px;margin:8px auto 0;border-radius:50%;
+  border:2px solid rgba(242,232,213,.4);position:relative}
+#hint .hring::after{content:'';position:absolute;width:12px;height:12px;border-radius:50%;
+  background:rgba(242,232,213,.5);top:9px;left:9px;animation:hdrift 1.6s ease-in-out infinite}
+@keyframes hpulse{50%{opacity:.75}}
+@keyframes hdrift{0%,100%{transform:translate(0,0)}25%{transform:translate(7px,0)}
+  50%{transform:translate(0,-7px)}75%{transform:translate(-7px,0)}}
+/* title screen */
+#title{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;
+  justify-content:center;background:rgba(10,7,5,.5);text-align:center;padding:16px}
+#title.on{display:flex}
+#title h1{font-family:'PS2P',monospace;font-size:22px;color:var(--kertas);margin:0;
+  text-shadow:3px 3px 0 var(--tinta),6px 6px 0 rgba(0,0,0,.6);letter-spacing:2px}
+#title .tag{font-size:22px;color:var(--kertas2);margin:10px 0 22px;text-shadow:2px 2px 0 #000}
+#tbtns,#chsel{display:flex;flex-direction:column;gap:8px;width:min(78%,260px)}
+#chsel{display:none}
+#chsel .csl{font-family:'PS2P',monospace;font-size:9px;color:var(--kunyit);margin:0 0 4px;
+  text-shadow:2px 2px 0 #000}
+.chrow{display:flex;justify-content:center;gap:10px}
+.chcard{background:var(--kertas);border:3px solid var(--kopi);box-shadow:3px 3px 0 rgba(0,0,0,.5);
+  padding:6px;cursor:pointer;line-height:0}
+.chprev{width:48px;height:48px}
+.chc{font-family:'PS2P',monospace;font-size:9px;text-align:left;padding:9px 10px;cursor:pointer;
+  background:var(--kertas);color:var(--kopi);border:2px solid var(--kopi);box-shadow:3px 3px 0 rgba(0,0,0,.4)}
+.chc.lock{background:var(--kayu2);color:var(--kertas2)}
+#title .chc{text-align:center}
 .dialog{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);
   width:min(94%,540px);background:var(--kayu);border:3px solid var(--kertas);
   box-shadow:0 0 0 3px var(--kayu2),5px 5px 0 rgba(0,0,0,.5);padding:10px 14px 12px;display:none}
 .dialog.on{display:block}
 .dialog .who{position:absolute;top:-15px;left:8px;font-family:'PS2P',monospace;font-size:8px;
   background:var(--kunyit);color:var(--kopi);border:2px solid var(--kopi);padding:3px 7px}
+#dclose{position:absolute;top:-15px;right:8px;font-family:'PS2P',monospace;font-size:8px;
+  background:var(--terakota);color:var(--kertas);border:2px solid var(--kopi);padding:3px 7px;cursor:pointer}
 .dialog p{margin:4px 0 0;font-size:22px;line-height:1.25}
 #dinput{display:none;width:100%;margin-top:8px;font-family:'VT323',monospace;font-size:22px;
   background:var(--kopi);color:var(--kertas);border:2px solid var(--kertas2);padding:6px 8px;outline:none}
 #dchoices{display:flex;flex-direction:column;gap:6px;margin-top:8px}
-.chc{font-family:'PS2P',monospace;font-size:9px;text-align:left;padding:9px 10px;cursor:pointer;
-  background:var(--kertas);color:var(--kopi);border:2px solid var(--kopi);box-shadow:3px 3px 0 rgba(0,0,0,.4)}
-.chc.lock{background:var(--kayu2);color:var(--kertas2)}
 .popup{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.55)}
 .popup.on{display:flex}
 .pcard{width:min(88%,420px);background:var(--kertas);color:var(--kopi);border:3px solid var(--kopi);
@@ -42,26 +78,40 @@ canvas{image-rendering:pixelated;image-rendering:crisp-edges;
   color:var(--kopi);border:2px solid var(--kopi);padding:8px 10px;text-decoration:none;margin-right:8px}
 #pclose{font-family:'PS2P',monospace;font-size:9px;background:var(--kayu);color:var(--kertas);
   border:2px solid var(--kayu2);padding:8px 10px;cursor:pointer}
-.padwrap{position:relative;padding:8px 12px calc(12px + env(safe-area-inset-bottom))}
-.ctx{position:absolute;top:-46px;left:50%;transform:translateX(-50%);
-  font-family:'PS2P',monospace;font-size:10px;color:var(--kopi);background:var(--kunyit);
-  border:3px solid #8a6318;box-shadow:0 4px 0 #000;padding:11px 18px;cursor:pointer;
-  user-select:none;-webkit-user-select:none;visibility:hidden;white-space:nowrap;z-index:3}
+/* action bar — ctx lives HERE now (playtest: it overlapped the dialog box) */
+.actionbar{display:flex;justify-content:center;padding:8px 12px calc(10px + env(safe-area-inset-bottom))}
+.ctx{font-family:'PS2P',monospace;font-size:10px;color:var(--kopi);background:var(--kunyit);
+  border:3px solid #8a6318;box-shadow:0 4px 0 #000;padding:12px 22px;cursor:pointer;
+  user-select:none;-webkit-user-select:none;visibility:hidden;white-space:nowrap;min-width:170px;text-align:center}
 .ctx.on{visibility:visible}
-.ctx:active{transform:translateX(-50%) translateY(3px);box-shadow:0 1px 0 #000}
-.pad{display:flex;justify-content:space-between;gap:8px}
-.cluster{display:flex;gap:8px}
-.btn{font-family:'PS2P',monospace;font-size:14px;color:var(--kertas);background:var(--kayu);
-  border:3px solid var(--kayu2);box-shadow:0 4px 0 #000;width:64px;padding:16px 0;text-align:center;
-  user-select:none;-webkit-user-select:none;cursor:pointer}
-.btn:active{transform:translateY(3px);box-shadow:0 1px 0 #000}
+.ctx:active{transform:translateY(3px);box-shadow:0 1px 0 #000}
 </style>
 
 <div class="hud"><span id="loc">…</span><span id="phasebtn">AUTO ✦</span><span>KOPI <b id="kopi">☕☕☕</b></span></div>
 <div class="screen">
   <canvas id="cv" width="144" height="256"></canvas>
   <div class="fade" id="fade"></div>
-  <div class="dialog" id="dlg"><span class="who" id="who">NONA AKSARA</span>
+  <div id="joy"><div id="jnub"></div></div>
+  <div id="hint"><div class="hcard">GESER JEMPOLMU<br>UNTUK JALAN ✦<span class="hring"></span></div></div>
+  <div id="title">
+    <h1>NONAFIKSI</h1>
+    <p class="tag">cerita yang dicetak hangat ☕</p>
+    <div id="tbtns">
+      <button class="chc" id="bMulai">MULAI ✦</button>
+      <button class="chc" id="bLanjut" style="display:none">PULANG ▸ RUMAHMU</button>
+      <button class="chc" id="bKredit">KREDIT &amp; SUMBER</button>
+    </div>
+    <div id="chsel">
+      <p class="csl">PILIH DIRIMU —</p>
+      <div class="chrow">
+        <div class="chcard" data-k="boy"><canvas class="chprev" data-k="boy" width="16" height="16"></canvas></div>
+        <div class="chcard" data-k="v1"><canvas class="chprev" data-k="v1" width="16" height="16"></canvas></div>
+        <div class="chcard" data-k="v4"><canvas class="chprev" data-k="v4" width="16" height="16"></canvas></div>
+        <div class="chcard" data-k="woman"><canvas class="chprev" data-k="woman" width="16" height="16"></canvas></div>
+      </div>
+    </div>
+  </div>
+  <div class="dialog" id="dlg"><span class="who" id="who">NONA AKSARA</span><span id="dclose">✕</span>
     <p><span id="dtxt"></span></p>
     <input id="dinput" autocomplete="off" spellcheck="false">
     <div id="dchoices"></div></div>
@@ -70,14 +120,7 @@ canvas{image-rendering:pixelated;image-rendering:crisp-edges;
     <a id="plink" target="_blank" rel="noopener"></a><button id="pclose">TUTUP</button>
   </div></div>
 </div>
-<div class="padwrap">
-  <div class="ctx" id="ctx"></div>
-  <div class="pad">
-    <div class="btn" data-k="L">◀</div>
-    <div class="cluster"><div class="btn" data-k="D">▼</div><div class="btn" data-k="U">▲</div></div>
-    <div class="btn" data-k="R">▶</div>
-  </div>
-</div>
+<div class="actionbar"><div class="ctx" id="ctx"></div></div>
 
 <script>// NonaFiksi engine — manifest-driven pixel world. NF.init(bundle) boots it.
 // Worlds are DATA: catalog.json defines components, aksara/*.json define
@@ -172,7 +215,8 @@ function loadSheets(srcMap) {
 
 // ---------- state ----------
 const st = { scene:null, x:0, y:0, dir:'down', frame:0, ft:0, moving:false,
-  fading:false, phaseOverride:null, dlg:null, kopi:3 };
+  fading:false, phaseOverride:null, dlg:null, kopi:3,
+  mode:'play', jx:0, jy:0, hidePlayer:false, playerSheet:'boy' };
 const persona = { get(){ try{return JSON.parse(localStorage.nf_persona||'null');}catch(e){return null;} },
   set(p){ localStorage.nf_persona = JSON.stringify(p); } };
 
@@ -289,7 +333,7 @@ function drawScene(sc,t){
   });
   (sc.fx||[]).forEach(f=>FX[f.type]&&FX[f.type](f,t));
   ents.filter(e=>e.y<=st.y).sort((a,b)=>a.y-b.y).forEach(e=>e.draw());
-  drawChar(st.playerSheet||'boy',st.x,st.y,st.dir,st.moving?st.frame:0);
+  if(!st.hidePlayer)drawChar(st.playerSheet||'boy',st.x,st.y,st.dir,st.moving?st.frame:0);
   ents.filter(e=>e.y>st.y).sort((a,b)=>a.y-b.y).forEach(e=>e.draw());
 }
 
@@ -329,7 +373,10 @@ function stepDlg(){
 function advDlg(){ const d=st.dlg; if(!d)return;
   const s=d.script[d.i];
   if(d.typed<d.text.length){ d.typed=d.text.length; ui.dtxt.textContent=d.text; return; }
-  if(s.choices)return; // must pick
+  if(s.choices){ // choices + free-typed input can coexist (Yose: "ketik sendiri")
+    if(s.input){ const v=ui.dinput.value.trim();
+      if(v){ (s.onfree||(()=>{}))(v); if(st.dlg===d){d.i++;stepDlg();} } }
+    return; }
   if(s.input){ const v=ui.dinput.value.trim(); if(!v)return ui.dinput.focus();
     (s.oninput||(()=>{}))(v); }
   if(s.action)s.action();
@@ -368,9 +415,26 @@ function generateHome(p){
 // ---------- input ----------
 const keys={};
 function bindUI(){
-  document.querySelectorAll('.btn').forEach(b=>{ const k=b.dataset.k;
-    b.addEventListener('pointerdown',e=>{e.preventDefault();keys[k]=true;});
-    ['pointerup','pointerleave','pointercancel'].forEach(ev=>b.addEventListener(ev,()=>keys[k]=false)); });
+  // floating thumb joystick — spawns faint at the touch point, whole screen is the pad
+  const scr=document.querySelector('.screen'); let joyId=null,jcx=0,jcy=0;
+  scr.addEventListener('pointerdown',e=>{
+    if(st.mode!=='play'||st.dlg||ui.pop.classList.contains('on')||joyId!==null)return;
+    if(e.target!==cvs&&e.target!==scr)return;
+    e.preventDefault(); joyId=e.pointerId; jcx=e.clientX; jcy=e.clientY;
+    const r=scr.getBoundingClientRect();
+    ui.joy.style.left=(jcx-r.left-38)+'px'; ui.joy.style.top=(jcy-r.top-38)+'px';
+    ui.joy.style.display='block'; ui.jnub.style.left='21px'; ui.jnub.style.top='21px';
+    try{scr.setPointerCapture(e.pointerId);}catch(err){} });
+  scr.addEventListener('pointermove',e=>{
+    if(e.pointerId!==joyId)return;
+    let dx=e.clientX-jcx, dy=e.clientY-jcy; const m=Math.hypot(dx,dy);
+    if(m>28){dx*=28/m;dy*=28/m;}
+    ui.jnub.style.left=(21+dx)+'px'; ui.jnub.style.top=(21+dy)+'px';
+    st.jx=Math.abs(dx)<6?0:dx/28; st.jy=Math.abs(dy)<6?0:dy/28; });
+  const jend=e=>{ if(e.pointerId!==joyId)return;
+    joyId=null; st.jx=st.jy=0; ui.joy.style.display='none'; };
+  scr.addEventListener('pointerup',jend); scr.addEventListener('pointercancel',jend);
+  ui.dclose.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();closeDlg();});
   const KM={ArrowLeft:'L',a:'L',ArrowRight:'R',d:'R',ArrowUp:'U',w:'U',ArrowDown:'D',s:'D'};
   addEventListener('keydown',e=>{ if(document.activeElement===ui.dinput){ if(e.key==='Enter')advDlg(); return; }
     if(KM[e.key]){e.preventDefault();keys[KM[e.key]]=true;}
@@ -385,6 +449,7 @@ function bindUI(){
     ui.phasebtn.textContent=(st.phaseOverride||'auto').toUpperCase()+' ✦'; });
 }
 function act(){
+  if(st.mode!=='play')return;
   if(st.dlg){advDlg();return;}
   if(ui.pop.classList.contains('on')){ui.pop.classList.remove('on');return;}
   const sc=SCENES[st.scene];
@@ -401,11 +466,21 @@ function loop(t){
   const dt=Math.min(32,t-last)/1000; last=t;
   if(!READY){requestAnimationFrame(loop);return;}
   const sc=SCENES[st.scene];
+  if(st.mode==='title'){ // attract: slow camera drift over the street, no player
+    const camY=(Math.sin(t/12000)*.5+.5)*Math.max(0,sc.H-256);
+    X.setTransform(1,0,0,1,0,0); X.clearRect(0,0,144,256); X.translate(0,-camY);
+    drawScene(sc,t); X.setTransform(1,0,0,1,0,0);
+    const tov=OVERLAY[phase()]; if(tov){X.fillStyle=tov;X.fillRect(0,0,144,256);}
+    ui.chprevs.forEach(c=>{ const g=c.getContext('2d'); g.imageSmoothingEnabled=false;
+      g.clearRect(0,0,16,16); g.drawImage(img(c.dataset.k),0,((t/200|0)%4)*16,16,16,0,0,16,16); });
+    requestAnimationFrame(loop); return; }
   st.moving=false;
   if(!st.dlg&&!st.fading&&!ui.pop.classList.contains('on')){
-    let dx=(keys.R?1:0)-(keys.L?1:0),dy=(keys.D?1:0)-(keys.U?1:0);
-    if(dx&&dy){dx*=.72;dy*=.72;}
-    if(dx||dy){st.moving=true;
+    let dx=(keys.R?1:0)-(keys.L?1:0)+st.jx, dy=(keys.D?1:0)-(keys.U?1:0)+st.jy;
+    const mag=Math.hypot(dx,dy); if(mag>1){dx/=mag;dy/=mag;}
+    if(Math.abs(dx)>.05||Math.abs(dy)>.05){st.moving=true;
+      if(ui.hint.classList.contains('on')){ui.hint.classList.remove('on');
+        try{localStorage.nf_hint=1;}catch(e){}}
       st.dir=Math.abs(dy)>=Math.abs(dx)?(dy>0?'down':'up'):(dx>0?'right':'left');
       const nx=Math.max(8,Math.min(sc.W-8,st.x+dx*56*dt)),
             ny=Math.max(12,Math.min(sc.H-3,st.y+dy*56*dt));
@@ -432,16 +507,26 @@ function loop(t){
 async function init(bundle){
   CATALOG=bundle.catalog; SCENES=bundle.scenes;
   cvs=document.getElementById('cv'); X=cvs.getContext('2d'); X.imageSmoothingEnabled=false;
-  ['loc','ctx','dlg','who','dtxt','dinput','dchoices','fade','pop','ptitle','pbody','plink','pclose','phasebtn']
+  ['loc','ctx','dlg','who','dtxt','dinput','dchoices','fade','pop','ptitle','pbody','plink','pclose',
+   'phasebtn','joy','jnub','hint','title','dclose']
     .forEach(id=>ui[id]=document.getElementById(id));
+  ui.chprevs=[...document.querySelectorAll('.chprev')];
   Object.entries(MAPS).forEach(([k,m])=>A.custom[k]=spr(m));
   await loadSheets(bundle.sheets);
   bundle.wire(api); // scenes get their scripts (onTalk, onMenu, first-visit)
   st.scene=bundle.start; ui.loc.textContent=SCENES[st.scene].name;
   st.x=SCENES[st.scene].spawn[0]; st.y=SCENES[st.scene].spawn[1];
+  st.mode='title'; st.hidePlayer=true; ui.title.classList.add('on');
+  ui.loc.textContent='NONAFIKSI';
   bindUI(); READY=true; requestAnimationFrame(loop); }
 
-const api={ init,goto,runScript,popup,closeDlg,persona,generateHome,
+// leave the title screen and enter the world
+function begin(name,sx,sy){
+  ui.title.classList.remove('on'); st.mode='play'; st.hidePlayer=false;
+  goto(name,sx,sy);
+  if(!localStorage.nf_hint)ui.hint.classList.add('on'); }
+
+const api={ init,goto,begin,runScript,popup,closeDlg,persona,generateHome,
   scenes:()=>SCENES,state:st,phase };
 return api; })();
 </script>
@@ -453,6 +538,21 @@ return api; })();
 (function(){
 const wire = (api)=>{
   const S = api.scenes();
+  const $ = id=>document.getElementById(id);
+
+  // ---- title screen wiring ----
+  api.state.playerSheet = localStorage.nf_char||'boy';
+  if(api.persona.get()) $('bLanjut').style.display='block';
+  $('bMulai').onpointerdown = e=>{ e.preventDefault();
+    $('tbtns').style.display='none'; $('chsel').style.display='flex'; };
+  document.querySelectorAll('.chcard').forEach(c=>c.onpointerdown=e=>{ e.preventDefault();
+    localStorage.nf_char=c.dataset.k; api.state.playerSheet=c.dataset.k;
+    api.begin('warung',72,224); });
+  $('bLanjut').onpointerdown = e=>{ e.preventDefault(); api.begin('rumah',72,190); };
+  $('bKredit').onpointerdown = e=>{ e.preventDefault(); api.popup({title:'KREDIT & SUMBER',
+    body:'Aset pixel: Cozy Farm, Ninja Adventure, Kenney, dkk — semua CC0; '+
+      'daftar lengkap per berkas di repo (web/assets/SUMBER.md). Font: Press Start 2P '+
+      '& VT323 (OFL). Semua tokoh cerita adalah fiksi komposit. Dicetak hangat. ☕'}); };
   const doorMenu = ()=>api.runScript([{say:"Mau ke mana?",choices:[
     {label:"Jalan Kenangan",then:()=>{api.closeDlg();api.goto('street',72,110);}},
     {label:"Dunia kisah lain",locked:true,lockedMsg:"Peta dunia menyusul. ✦"}]}]);

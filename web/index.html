@@ -14,24 +14,60 @@ body{font-family:'VT323',monospace;color:var(--kertas);display:flex;flex-directi
 .hud b{color:var(--kunyit);font-weight:normal}
 #phasebtn{cursor:pointer;border:2px solid var(--kayu2);padding:4px 6px;background:var(--kayu);color:var(--kunyit)}
 .screen{position:relative;flex:1;display:flex;align-items:center;justify-content:center;min-height:0}
-canvas{image-rendering:pixelated;image-rendering:crisp-edges;
-  height:min(calc(100vh - 150px), calc((100vw - 10px) * 256 / 144));
+canvas{image-rendering:pixelated;image-rendering:crisp-edges}
+#cv{height:min(calc(100vh - 128px), calc((100vw - 10px) * 256 / 144));
   border:3px solid var(--kayu2);box-shadow:0 0 0 3px #000,0 10px 40px rgba(0,0,0,.6);background:#000}
 .fade{position:absolute;inset:0;background:#000;opacity:0;pointer-events:none;transition:opacity .22s}
 .fade.on{opacity:1}
+/* thumb joystick — faint, spawns where the thumb lands */
+#joy{position:absolute;width:76px;height:76px;border-radius:50%;display:none;pointer-events:none;
+  border:2px solid rgba(242,232,213,.22);background:rgba(242,232,213,.05)}
+#jnub{position:absolute;width:30px;height:30px;border-radius:50%;
+  background:rgba(242,232,213,.22);border:2px solid rgba(242,232,213,.3)}
+#hint{position:absolute;inset:0;display:none;align-items:flex-end;justify-content:center;
+  pointer-events:none;padding-bottom:56px}
+#hint.on{display:flex}
+#hint .hcard{font-family:'PS2P',monospace;font-size:8px;color:var(--kertas);text-align:center;
+  background:rgba(26,18,13,.85);border:2px solid var(--kayu2);padding:10px 12px;line-height:1.9;
+  animation:hpulse 1.6s ease-in-out infinite}
+#hint .hring{display:block;width:34px;height:34px;margin:8px auto 0;border-radius:50%;
+  border:2px solid rgba(242,232,213,.4);position:relative}
+#hint .hring::after{content:'';position:absolute;width:12px;height:12px;border-radius:50%;
+  background:rgba(242,232,213,.5);top:9px;left:9px;animation:hdrift 1.6s ease-in-out infinite}
+@keyframes hpulse{50%{opacity:.75}}
+@keyframes hdrift{0%,100%{transform:translate(0,0)}25%{transform:translate(7px,0)}
+  50%{transform:translate(0,-7px)}75%{transform:translate(-7px,0)}}
+/* title screen */
+#title{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;
+  justify-content:center;background:rgba(10,7,5,.5);text-align:center;padding:16px}
+#title.on{display:flex}
+#title h1{font-family:'PS2P',monospace;font-size:22px;color:var(--kertas);margin:0;
+  text-shadow:3px 3px 0 var(--tinta),6px 6px 0 rgba(0,0,0,.6);letter-spacing:2px}
+#title .tag{font-size:22px;color:var(--kertas2);margin:10px 0 22px;text-shadow:2px 2px 0 #000}
+#tbtns,#chsel{display:flex;flex-direction:column;gap:8px;width:min(78%,260px)}
+#chsel{display:none}
+#chsel .csl{font-family:'PS2P',monospace;font-size:9px;color:var(--kunyit);margin:0 0 4px;
+  text-shadow:2px 2px 0 #000}
+.chrow{display:flex;justify-content:center;gap:10px}
+.chcard{background:var(--kertas);border:3px solid var(--kopi);box-shadow:3px 3px 0 rgba(0,0,0,.5);
+  padding:6px;cursor:pointer;line-height:0}
+.chprev{width:48px;height:48px}
+.chc{font-family:'PS2P',monospace;font-size:9px;text-align:left;padding:9px 10px;cursor:pointer;
+  background:var(--kertas);color:var(--kopi);border:2px solid var(--kopi);box-shadow:3px 3px 0 rgba(0,0,0,.4)}
+.chc.lock{background:var(--kayu2);color:var(--kertas2)}
+#title .chc{text-align:center}
 .dialog{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);
   width:min(94%,540px);background:var(--kayu);border:3px solid var(--kertas);
   box-shadow:0 0 0 3px var(--kayu2),5px 5px 0 rgba(0,0,0,.5);padding:10px 14px 12px;display:none}
 .dialog.on{display:block}
 .dialog .who{position:absolute;top:-15px;left:8px;font-family:'PS2P',monospace;font-size:8px;
   background:var(--kunyit);color:var(--kopi);border:2px solid var(--kopi);padding:3px 7px}
+#dclose{position:absolute;top:-15px;right:8px;font-family:'PS2P',monospace;font-size:8px;
+  background:var(--terakota);color:var(--kertas);border:2px solid var(--kopi);padding:3px 7px;cursor:pointer}
 .dialog p{margin:4px 0 0;font-size:22px;line-height:1.25}
 #dinput{display:none;width:100%;margin-top:8px;font-family:'VT323',monospace;font-size:22px;
   background:var(--kopi);color:var(--kertas);border:2px solid var(--kertas2);padding:6px 8px;outline:none}
 #dchoices{display:flex;flex-direction:column;gap:6px;margin-top:8px}
-.chc{font-family:'PS2P',monospace;font-size:9px;text-align:left;padding:9px 10px;cursor:pointer;
-  background:var(--kertas);color:var(--kopi);border:2px solid var(--kopi);box-shadow:3px 3px 0 rgba(0,0,0,.4)}
-.chc.lock{background:var(--kayu2);color:var(--kertas2)}
 .popup{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.55)}
 .popup.on{display:flex}
 .pcard{width:min(88%,420px);background:var(--kertas);color:var(--kopi);border:3px solid var(--kopi);
@@ -42,26 +78,40 @@ canvas{image-rendering:pixelated;image-rendering:crisp-edges;
   color:var(--kopi);border:2px solid var(--kopi);padding:8px 10px;text-decoration:none;margin-right:8px}
 #pclose{font-family:'PS2P',monospace;font-size:9px;background:var(--kayu);color:var(--kertas);
   border:2px solid var(--kayu2);padding:8px 10px;cursor:pointer}
-.padwrap{position:relative;padding:8px 12px calc(12px + env(safe-area-inset-bottom))}
-.ctx{position:absolute;top:-46px;left:50%;transform:translateX(-50%);
-  font-family:'PS2P',monospace;font-size:10px;color:var(--kopi);background:var(--kunyit);
-  border:3px solid #8a6318;box-shadow:0 4px 0 #000;padding:11px 18px;cursor:pointer;
-  user-select:none;-webkit-user-select:none;visibility:hidden;white-space:nowrap;z-index:3}
+/* action bar — ctx lives HERE now (playtest: it overlapped the dialog box) */
+.actionbar{display:flex;justify-content:center;padding:8px 12px calc(10px + env(safe-area-inset-bottom))}
+.ctx{font-family:'PS2P',monospace;font-size:10px;color:var(--kopi);background:var(--kunyit);
+  border:3px solid #8a6318;box-shadow:0 4px 0 #000;padding:12px 22px;cursor:pointer;
+  user-select:none;-webkit-user-select:none;visibility:hidden;white-space:nowrap;min-width:170px;text-align:center}
 .ctx.on{visibility:visible}
-.ctx:active{transform:translateX(-50%) translateY(3px);box-shadow:0 1px 0 #000}
-.pad{display:flex;justify-content:space-between;gap:8px}
-.cluster{display:flex;gap:8px}
-.btn{font-family:'PS2P',monospace;font-size:14px;color:var(--kertas);background:var(--kayu);
-  border:3px solid var(--kayu2);box-shadow:0 4px 0 #000;width:64px;padding:16px 0;text-align:center;
-  user-select:none;-webkit-user-select:none;cursor:pointer}
-.btn:active{transform:translateY(3px);box-shadow:0 1px 0 #000}
+.ctx:active{transform:translateY(3px);box-shadow:0 1px 0 #000}
 </style>
 
 <div class="hud"><span id="loc">…</span><span id="phasebtn">AUTO ✦</span><span>KOPI <b id="kopi">☕☕☕</b></span></div>
 <div class="screen">
   <canvas id="cv" width="144" height="256"></canvas>
   <div class="fade" id="fade"></div>
-  <div class="dialog" id="dlg"><span class="who" id="who">NONA AKSARA</span>
+  <div id="joy"><div id="jnub"></div></div>
+  <div id="hint"><div class="hcard">GESER JEMPOLMU<br>UNTUK JALAN ✦<span class="hring"></span></div></div>
+  <div id="title">
+    <h1>NONAFIKSI</h1>
+    <p class="tag">cerita yang dicetak hangat ☕</p>
+    <div id="tbtns">
+      <button class="chc" id="bMulai">MULAI ✦</button>
+      <button class="chc" id="bLanjut" style="display:none">PULANG ▸ RUMAHMU</button>
+      <button class="chc" id="bKredit">KREDIT &amp; SUMBER</button>
+    </div>
+    <div id="chsel">
+      <p class="csl">PILIH DIRIMU —</p>
+      <div class="chrow">
+        <div class="chcard" data-k="boy"><canvas class="chprev" data-k="boy" width="16" height="16"></canvas></div>
+        <div class="chcard" data-k="v1"><canvas class="chprev" data-k="v1" width="16" height="16"></canvas></div>
+        <div class="chcard" data-k="v4"><canvas class="chprev" data-k="v4" width="16" height="16"></canvas></div>
+        <div class="chcard" data-k="woman"><canvas class="chprev" data-k="woman" width="16" height="16"></canvas></div>
+      </div>
+    </div>
+  </div>
+  <div class="dialog" id="dlg"><span class="who" id="who">NONA AKSARA</span><span id="dclose">✕</span>
     <p><span id="dtxt"></span></p>
     <input id="dinput" autocomplete="off" spellcheck="false">
     <div id="dchoices"></div></div>
@@ -70,13 +120,6 @@ canvas{image-rendering:pixelated;image-rendering:crisp-edges;
     <a id="plink" target="_blank" rel="noopener"></a><button id="pclose">TUTUP</button>
   </div></div>
 </div>
-<div class="padwrap">
-  <div class="ctx" id="ctx"></div>
-  <div class="pad">
-    <div class="btn" data-k="L">◀</div>
-    <div class="cluster"><div class="btn" data-k="D">▼</div><div class="btn" data-k="U">▲</div></div>
-    <div class="btn" data-k="R">▶</div>
-  </div>
-</div>
+<div class="actionbar"><div class="ctx" id="ctx"></div></div>
 
 __SCRIPTS__
