@@ -17,6 +17,9 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: 20 }
 
+      - name: Token diagnostic
+        run: npx wrangler@3 whoami 2>&1 | tail -30
+
       - name: Bootstrap D1 (idempotent) and wire database_id
         run: |
           npx wrangler@3 d1 create nonafiksi 2>/dev/null || true
