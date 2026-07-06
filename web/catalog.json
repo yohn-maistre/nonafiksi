@@ -1,0 +1,278 @@
+{
+ "warung-besar": {
+  "sheet": "house",
+  "sx": 385,
+  "sy": 226,
+  "w": 78,
+  "h": 78,
+  "tags": [
+   "kampung",
+   "landmark"
+  ]
+ },
+ "rumah-a": {
+  "sheet": "house",
+  "sx": 0,
+  "sy": 241,
+  "w": 80,
+  "h": 63,
+  "tags": [
+   "kampung"
+  ]
+ },
+ "rumah-b": {
+  "sheet": "house",
+  "sx": 0,
+  "sy": 305,
+  "w": 80,
+  "h": 63,
+  "tags": [
+   "kampung"
+  ]
+ },
+ "rumah-c": {
+  "sheet": "house",
+  "sx": 96,
+  "sy": 176,
+  "w": 48,
+  "h": 46,
+  "tags": [
+   "kampung"
+  ]
+ },
+ "rumah-d": {
+  "sheet": "house",
+  "sx": 465,
+  "sy": 128,
+  "w": 63,
+  "h": 48,
+  "tags": [
+   "kampung"
+  ]
+ },
+ "pohon": {
+  "sheet": "nature",
+  "sx": 210,
+  "sy": 132,
+  "w": 29,
+  "h": 27,
+  "tags": [
+   "nature"
+  ]
+ },
+ "pohon2": {
+  "sheet": "nature",
+  "sx": 258,
+  "sy": 132,
+  "w": 29,
+  "h": 27,
+  "tags": [
+   "nature"
+  ]
+ },
+ "pohon-besar": {
+  "sheet": "nature",
+  "sx": 193,
+  "sy": 83,
+  "w": 61,
+  "h": 44,
+  "tags": [
+   "nature"
+  ]
+ },
+ "semak": {
+  "sheet": "nature",
+  "sx": 64,
+  "sy": 145,
+  "w": 32,
+  "h": 30,
+  "tags": [
+   "nature"
+  ]
+ },
+ "kucing": {
+  "sheet": "cat",
+  "sx": 0,
+  "sy": 0,
+  "w": 16,
+  "h": 16,
+  "tags": [
+   "kampung",
+   "hidup"
+  ]
+ },
+ "lampu-jalan": {
+  "custom": "lampuJalan",
+  "fx": [
+   "glowFlicker",
+   "pool"
+  ],
+  "fxArgs": {
+   "gx": 3,
+   "gy": -20,
+   "r": 26,
+   "py": 24
+  },
+  "tags": [
+   "kota",
+   "kampung"
+  ]
+ },
+ "lampu-gantung": {
+  "custom": "lampuGantung",
+  "flat": true,
+  "fx": [
+   "glowFlicker"
+  ],
+  "fxArgs": {
+   "gx": 7,
+   "gy": 18,
+   "r": 48,
+   "a": 0.2
+  },
+  "tags": [
+   "interior"
+  ]
+ },
+ "window-l": {
+  "fxOnly": true,
+  "flat": true,
+  "fx": [
+   "window"
+  ],
+  "w": 40,
+  "h": 30,
+  "tags": [
+   "interior"
+  ]
+ },
+ "papan": {
+  "custom": "papan",
+  "tags": [
+   "kampung",
+   "kota"
+  ],
+  "interact": {
+   "type": "text",
+   "title": "Papan Jalan",
+   "body": "JALAN KENANGAN — semua kisah bermula dari sini."
+  }
+ },
+ "meja": {
+  "custom": "meja",
+  "tags": [
+   "interior"
+  ]
+ },
+ "kursi": {
+  "custom": "chair",
+  "tags": [
+   "interior"
+  ]
+ },
+ "cangkir": {
+  "custom": "cangkir",
+  "fx": [
+   "steam"
+  ],
+  "tags": [
+   "interior"
+  ]
+ },
+ "rak": {
+  "custom": "rak",
+  "tags": [
+   "interior",
+   "rumah"
+  ]
+ },
+ "poster": {
+  "custom": "poster",
+  "flat": true,
+  "tags": [
+   "interior",
+   "rumah"
+  ]
+ },
+ "frame": {
+  "custom": "frame",
+  "flat": true,
+  "tags": [
+   "interior",
+   "rumah"
+  ]
+ },
+ "musik": {
+  "custom": "musicBox",
+  "tags": [
+   "interior",
+   "rumah"
+  ]
+ },
+ "kasur": {
+  "custom": "bed",
+  "tags": [
+   "interior",
+   "rumah"
+  ]
+ },
+ "tanaman": {
+  "custom": "tanaman",
+  "tags": [
+   "interior",
+   "nature"
+  ]
+ },
+ "rak-kue": {
+  "custom": "cakeRack",
+  "tags": [
+   "interior",
+   "warung"
+  ],
+  "interact": {
+   "type": "text",
+   "title": "Rak Kue",
+   "body": "Hari ini: bolu kukus, lapis legit, pisang goreng. Semua buatan Nona."
+  }
+ },
+ "mesin-kopi": {
+  "custom": "coffeeMachine",
+  "fx": [
+   "steam"
+  ],
+  "tags": [
+   "interior",
+   "warung"
+  ],
+  "interact": {
+   "type": "text",
+   "title": "Mesin Kopi",
+   "body": "Mesin kesayangan Nona. Kopi tubruk, es kopi susu, kopi kenangan."
+  }
+ },
+ "menu-besar": {
+  "custom": "menuBesar",
+  "flat": true,
+  "tags": [
+   "interior",
+   "warung"
+  ],
+  "interact": {
+   "type": "text",
+   "title": "Menu Warung",
+   "body": "Kopi Tubruk 1☕ · Es Kopi Susu 1☕ · Pisang Goreng 1☕ · Cerita — gratis, selalu."
+  }
+ },
+ "cerobong": {
+  "fxOnly": true,
+  "flat": true,
+  "fx": [
+   "smoke"
+  ],
+  "w": 4,
+  "h": 4,
+  "tags": [
+   "kampung"
+  ]
+ }
+}

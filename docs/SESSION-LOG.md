@@ -141,3 +141,35 @@ Letta disqualified (3-agent hosted cap). Deploy: scaffold + CI workflow
 ready, blocked on ONE Yose action (docs/DEPLOY.md: Option A CF API token
 recommended vs Option B public repo). Kenney city + OGA farm (rice/
 cassava/coffee!) + beach sheets also in web/assets for next protos.
+
+## 2026-07-06 (midday) — v0.4 FOUNDATION: the engine is data-driven
+
+Plan approved (docs/PLAN.md) and Waves 0-2 + core of 3-4 shipped in one build
+(dist/nonafiksi.html, 240KB single file; phone copy nonafiksi-v04-foundation
+.html; also on claude.ai artifact).
+
+Architecture now: web/engine.js (generic: loader + night-grade, phases,
+FX registry incl. bunting/window/rays/smoke, DECOS parametrics, depth sort,
+dialog with say/input/choices, periksa popups, collision, camera, custom
+sprite MAPS) + web/catalog.json (28 components with tags — the .aksara
+component catalog v0) + web/aksara/scenes.json (street/warung/kantor as
+pure data) + web/game.js (wiring: onboarding interview, story menu) +
+tools/build.py (single-file bundler) + tools/pngbox.py (pure-stdlib PNG
+sprite-bbox finder — NO MORE eyeballed crops; house/tree coords now exact).
+
+Playtest fixes IN: beyblade walk (cols=direction), dialog advance (LANJUT
+button + tap-dialog), verified tree crops. Features IN: real-time day/night
+(pagi/siang/sore/malam; sprites raw by day per Yose's ASLI verdict, graded
+malam; window fx phase-aware with sun rays; phase override button in HUD),
+cozy warung v2 (4 tables/chairs/steaming cups, cake rack, coffee machine,
+big menu — all periksa-able; Nona in APRON), onboarding (first talk = name
++ link interview -> generates RUMAH: shareable-home v0 with link racks that
+popup + OPEN, poster/frame/music placeholders honest-labeled), street
+PULANG exit (locked until home built), Kisah menu (Oligarki cuplikan scene
+playable w/ fictional-composite disclaimer; Zakheus + Curhat locked with
+in-fiction reasons), persona in localStorage.
+
+Known seams: chicken/dog sprites lost with deleted zip (re-fetch via
+documented itch flow later); warung/kantor scene coords untuned; NPC walk
+direction order unverified (DIRCOL constant); hosted mode needs a fetch
+shim (Wave 5). Next: Yose playtest -> tune -> Wave 5 deploy on CF token.
