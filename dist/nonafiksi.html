@@ -13,8 +13,9 @@ body{font-family:'VT323',monospace;color:var(--kertas);display:flex;flex-directi
   font-family:'PS2P',monospace;font-size:8px;color:var(--kertas2);padding:8px 10px;letter-spacing:1px}
 .hud b{color:var(--kunyit);font-weight:normal}
 #phasebtn{cursor:pointer;border:2px solid var(--kayu2);padding:4px 6px;background:var(--kayu);color:var(--kunyit)}
-.screen{position:relative;flex:1;display:flex;align-items:center;justify-content:center;min-height:0}
-canvas{image-rendering:pixelated;image-rendering:crisp-edges}
+.screen{position:relative;flex:1;display:flex;align-items:center;justify-content:center;min-height:0;
+  touch-action:none} /* pan gestures fire pointercancel and kill the joystick */
+canvas{image-rendering:pixelated;image-rendering:crisp-edges;touch-action:none}
 #cv{height:min(calc(100vh - 128px), calc((100vw - 10px) * 256 / 144));
   border:3px solid var(--kayu2);box-shadow:0 0 0 3px #000,0 10px 40px rgba(0,0,0,.6);background:#000}
 .fade{position:absolute;inset:0;background:#000;opacity:0;pointer-events:none;transition:opacity .22s}
