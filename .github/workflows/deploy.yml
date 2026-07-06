@@ -17,20 +17,6 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: 20 }
 
-      - name: Token diagnostic
-        run: npx wrangler@3 whoami 2>&1 | tail -30
-
-      - name: Bootstrap D1 (idempotent) and wire database_id
-        run: |
-          npx wrangler@3 d1 create nonafiksi 2>/dev/null || true
-          ID=$(npx wrangler@3 d1 list --json | node -e "let d='';process.stdin.on('data',c=>d+=c).on('end',()=>{const x=JSON.parse(d).find(r=>r.name==='nonafiksi');console.log(x.uuid)})")
-          echo "D1 id: $ID"
-          sed -i "s/TBD-after-wrangler-d1-create/$ID/" wrangler.toml
-          npx wrangler@3 d1 execute nonafiksi --remote --file worker/schema.sql
-
-      - name: Deploy Worker (API + NonaAgent DO)
-        run: npx wrangler@3 deploy
-
       - name: Build single-file game
         run: |
           python3 tools/build.py
@@ -38,5 +24,16 @@ jobs:
 
       - name: Deploy Pages
         run: |
-          npx wrangler@3 pages project create nonafiksi --production-branch=main 2>/dev/null || true
-          npx wrangler@3 pages deploy pages-dist --project-name=nonafiksi --commit-dirty=true
+          npx wrangler@4 pages project create nonafiksi --production-branch=main 2>/dev/null || true
+          npx wrangler@4 pages deploy pages-dist --project-name=nonafiksi --commit-dirty=true
+
+      - name: Bootstrap D1 (idempotent) and wire database_id
+        run: |
+          npx wrangler@4 d1 create nonafiksi 2>/dev/null || true
+          ID=$(npx wrangler@4 d1 list --json | node -e "let d='';process.stdin.on('data',c=>d+=c).on('end',()=>{const x=JSON.parse(d).find(r=>r.name==='nonafiksi');console.log(x.uuid)})")
+          echo "D1 id: $ID"
+          sed -i "s/TBD-after-wrangler-d1-create/$ID/" wrangler.toml
+          npx wrangler@4 d1 execute nonafiksi --remote --file worker/schema.sql
+
+      - name: Deploy Worker (API + NonaAgent DO)
+        run: npx wrangler@4 deploy
