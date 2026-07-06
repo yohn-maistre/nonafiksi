@@ -173,3 +173,31 @@ Known seams: chicken/dog sprites lost with deleted zip (re-fetch via
 documented itch flow later); warung/kantor scene coords untuned; NPC walk
 direction order unverified (DIRCOL constant); hosted mode needs a fetch
 shim (Wave 5). Next: Yose playtest -> tune -> Wave 5 deploy on CF token.
+
+## 2026-07-06 (afternoon) — 🚀 LIVE: nonafiksi.pages.dev + v0.5
+
+Yose added CLOUDFLARE_API_TOKEN + ACCOUNT_ID as repo secrets himself. CI
+pipeline (pages-first ordering) shipped the single-file build to
+**https://nonafiksi.pages.dev** — the game is publicly playable. D1 +
+Worker steps still FAIL: token lacks D1 scope (auth 10000; wrangler whoami
+confirms valid Account token, Pages scope present). NEEDS-YOSE: edit token
+at dash.cloudflare.com/profile/api-tokens -> add Account permissions
+**D1:Edit** and **Workers Scripts:Edit** -> re-run deploy workflow; then
+backend (kopi API + NonaAgent DO) goes live with zero further changes.
+
+v0.5 shipped (also to phone as nonafiksi-v05.html): PHASE-AWARE GROUNDS —
+green grass + tan path by day with subtle blue-white noon flecks, ember
+darks at night; lamp glows/pools/fireflies now OFF by day, half-strength
+at sore, full at malam (fixes the "always a dark filter" playtest verdict).
+D-pad: ◀ ▶ at screen edges, ▼▲ centered; desktop gets arrows/WASD + E/
+Enter/SPACE. Semantic catalog fixes from playtest screenshots (pngbox gave
+exact boxes but wrong MEANINGS): market stall relabeled kios-jajan and
+placed deliberately (periksa: bakso/sate/es teh), rock renamed batu,
+proven top-row thatched houses restored, new pohon crop from leftmost
+big tree. Fonts committed to web/fonts (CI-safe build).
+
+Scout running: Indonesian biomes (kampung plank/stilt houses, sawah,
+jungle, swamp, savannah, volcano backdrops, ruko/kota), cafe interior
+packs from Yose's references (Penzilla, CaptainSkolot, LimeZu re-check),
+pixel-editor/procgen/LPC tooling verdicts. Next wave when it lands:
+modern-cozy warung interior + biome catalog expansion + editor decision.
