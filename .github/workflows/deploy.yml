@@ -37,3 +37,11 @@ jobs:
 
       - name: Deploy Worker (API + NonaAgent DO)
         run: npx wrangler@4 deploy
+
+      - name: Set NIM key (optional — /api/bangun lights up when present)
+        env:
+          NIM_API_KEY: ${{ secrets.NIM_API_KEY }}
+        run: |
+          if [ -n "$NIM_API_KEY" ]; then
+            printf '%s' "$NIM_API_KEY" | npx wrangler@4 secret put NIM_API_KEY
+          else echo "NIM_API_KEY not set yet — /api/bangun stays in fallback mode"; fi

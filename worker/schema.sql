@@ -13,3 +13,6 @@ CREATE TABLE IF NOT EXISTS stories(
 CREATE TABLE IF NOT EXISTS memory_facts(         -- distilled, batch-written
   id INTEGER PRIMARY KEY, user_id TEXT, fact TEXT,
   source TEXT, created_at TEXT);
+CREATE TABLE IF NOT EXISTS rumah(                -- the /@handle promise
+  handle TEXT PRIMARY KEY, persona TEXT NOT NULL,
+  manifest TEXT NOT NULL, updated_at TEXT);

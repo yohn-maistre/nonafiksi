@@ -9,6 +9,14 @@ const wire = (api)=>{
   const slug = s=>(s||'').toLowerCase().replace(/[^a-z0-9]+/g,'-')
     .replace(/^-+|-+$/g,'').slice(0,24)||'tamu';
 
+  // API base: set post-deploy (localStorage nf_api or the hardcoded worker URL).
+  // Empty = offline mode — every feature degrades to its deterministic layer.
+  const NF_API = localStorage.nf_api||'';
+  const post = (path,body)=>NF_API
+    ? fetch(NF_API+path,{method:'POST',headers:{'content-type':'application/json'},
+        body:JSON.stringify(body)})
+    : Promise.reject(new Error('offline'));
+
   // ---- title screen ----
   api.state.playerSheet = localStorage.nf_char||'boy';
   if(api.persona.get()) $('bLanjut').style.display='block';
@@ -74,6 +82,15 @@ const wire = (api)=>{
           {label:"KARTU PROFIL ✦ BAGIKAN",then:()=>{api.closeDlg();shareCard(api.persona.get());}},
           {label:"Nanti saja",then:()=>api.closeDlg()}]}]); }; } };
 
+  // merge an LLM decor plan into the deterministic base home (validated twice:
+  // Worker gates components/bounds; here we re-check against the live catalog)
+  const applyPlan=(plan)=>{ const sc=S.rumah; if(!sc||!plan)return;
+    (plan.placements||[]).forEach(pl=>{ const c=NF_CATALOG[pl.component]; if(!c)return;
+      sc.placements.push({component:pl.component,x:pl.x,y:pl.y});
+      if(!c.flat)sc.colliders.push([pl.x,pl.y+(c.h||12)-6,c.w||14,6]); });
+    if(plan.quote){ const po=sc.placements.find(p=>p.component==='poster');
+      if(po&&po.interact)po.interact.body=plan.quote+' — Nona Aksara'; } };
+
   const pulang = S.street.exits.find(e=>e.id==='pulang');
   const refreshPulang = ()=>{ if(api.persona.get()) delete pulang.locked;
     else pulang.locked='Rumahmu belum dibangun. Bicaralah dengan Nona di warung. ✦'; };
@@ -85,7 +102,10 @@ const wire = (api)=>{
   const hearStore=v=>{ try{ const a=JSON.parse(localStorage.nf_curhat||'[]');
     a.push({t:Date.now(),v:String(v).slice(0,500)});
     localStorage.nf_curhat=JSON.stringify(a.slice(-20)); }catch(e){} };
-  const hear=(v)=>{ hearStore(v); api.runScript([
+  const hear=(v)=>{ hearStore(v);
+    const per=api.persona.get()||{};
+    post('/api/bicara',{user:per.handle||'tamu',text:v}).catch(()=>{});
+    api.runScript([
     {say:"“"+(v.length>70?v.slice(0,70)+'…':v)+"” — hm."},
     {say:"Kucatat di laci, kata demi kata. Saat mesin cetak besar menyala, kisah seperti ini yang pertama kucetak. ✦"}]); };
 
@@ -163,7 +183,10 @@ const wire = (api)=>{
           {label:"RAPI — semua pada tempatnya",then:()=>draft.vibe='rapi'},
           {label:"RAMAI — tamu & tanaman",then:()=>draft.vibe='ramai'}]},
         {say:"Cukup. Malam ini kubangun rumahmu di ujung jalan — kecil, hangat, penuh rak untuk kisahmu.",
-          action:()=>{draft.handle=slug(draft.nama);api.persona.set(draft);buildRumah(draft);refreshPulang();}},
+          action:()=>{draft.handle=slug(draft.nama);api.persona.set(draft);buildRumah(draft);refreshPulang();
+            post('/api/bangun',{persona:draft}).then(r=>r.json())
+              .then(r=>applyPlan(r.plan)).catch(()=>{});
+            post('/api/rumah',{handle:draft.handle,persona:draft,manifest:{}}).catch(()=>{});}},
         {say:()=>"Selesai. Pulanglah, "+draft.nama+" — keluar, ikuti jalan ke selatan sampai papan terakhir. Rumahmu menunggu. ✦"}]);
     } else {
       const n=(+localStorage.nf_talks||0); localStorage.nf_talks=n+1;
