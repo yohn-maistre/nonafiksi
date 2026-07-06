@@ -55,6 +55,16 @@ const MAPS = {
  papan: ['xxxxxxxxxxxx','xccccccccccx','xciiiiiiiicx','xccccccccccx','xciiiiiiiicx','xccccccccccx','xxxxxxxxxxxx','....xx......','....xx......'],
  meja: ['W'.repeat(38),'W'+'w'.repeat(36)+'W','W'.repeat(38),'.WW'+'.'.repeat(32)+'WW.','.WW'+'.'.repeat(32)+'WW.'],
  cangkir: ['ccccc.','cCCCcc','cCCCcc','ccccc.','.ccc..'],
+ rakBuku: ['x'.repeat(20),'x'+'W'.repeat(18)+'x',
+  'x'+'ttiiddggttiiddggtt'+'x','x'+'ttiiddggttiiddggtt'+'x','x'+'W'.repeat(18)+'x',
+  'x'+'ggttiiddggttiiddgg'+'x','x'+'ggttiiddggttiiddgg'+'x','x'+'W'.repeat(18)+'x',
+  'x'+'iiddggttiiddggttii'+'x','x'+'iiddggttiiddggttii'+'x','x'+'W'.repeat(18)+'x','x'.repeat(20)],
+ mejaBundar: ['....WWWWWWWW....','..WWwwwwwwwwWW..','.W'+'w'.repeat(12)+'W.','.W'+'w'.repeat(12)+'W.',
+  '..WWwwwwwwwwWW..','....WWWWWWWW....','.....W....W.....','.....W....W.....'],
+ kasir: ['.xxxxxxxx.','.xccccccx.','.xxxxxxxx.','xxggggggxx','xxggggggxx','xxxxxxxxxx'],
+ tanamanGantung: ['....xx....','....xx....','.d.dddd.d.','.dddddddd.','..tttttt..','..tttttt..',
+  '.d.dddd.d.','.dd.dd.dd.','.d..dd..d.','....d.....','....d.....'],
+ kursiBar: ['.wwwwww.','.wwwwww.','..x..x..','..x..x..','.x....x.'],
  menuBesar: ['x'.repeat(34),'x'+'c'.repeat(32)+'x','x'+'c'.repeat(32)+'x',
    'xcc'+'i'.repeat(18)+'c'.repeat(12)+'x',
    'x'+'c'.repeat(32)+'x','xcc'+'C'.repeat(24)+'c'.repeat(6)+'x','x'+'c'.repeat(32)+'x',
@@ -269,7 +279,8 @@ function popup(p){ ui.ptitle.textContent=p.title||''; ui.pbody.textContent=p.bod
 function goto(name,sx,sy){ st.fading=true; ui.fade.classList.add('on');
   setTimeout(()=>{ st.scene=name; const sc=SCENES[name];
     st.x=sx??sc.spawn[0]; st.y=sy??sc.spawn[1];
-    ui.loc.textContent=sc.name; ui.fade.classList.remove('on'); st.fading=false; },240); }
+    ui.loc.textContent=sc.name; ui.fade.classList.remove('on'); st.fading=false;
+    if(sc.onEnter){const f=sc.onEnter; if(sc.onEnterOnce)sc.onEnter=null; setTimeout(f,260);} },240); }
 function generateHome(p){
   const links=(p.links||[]).slice(0,4);
   const sc={ name:'RUMAH '+(p.nama||'').toUpperCase(), ground:'interior', W:144,H:224,
@@ -286,6 +297,11 @@ function generateHome(p){
   links.forEach((l,i)=>{ sc.placements.push({component:'rak',x:20+ (i%2)*62, y:92+(i/2|0)*44,
     interact:{type:'link',title:l.label||('Tautan '+(i+1)),body:l.url,url:l.url}});
     sc.colliders.push([20+(i%2)*62,92+(i/2|0)*44,48,10]); });
+  if(p.vibe==='ramai'){ sc.placements.push({component:'bantal-duduk',x:112,y:186},
+      {component:'tanaman',x:8,y:130},{component:'karpet',x:48,y:130});
+    sc.colliders.push([8,134,10,6]); }
+  if(p.vibe==='hangat'){ sc.placements.push({component:'karpet',x:48,y:120},
+      {component:'kucing',x:118,y:184,interact:{type:'text',title:'Kucing',body:'Ia sudah menganggap ini rumahnya juga.'}}); }
   return sc; }
 
 // ---------- input ----------
@@ -403,5 +419,5 @@ function begin(name,sx,sy){
   if(!localStorage.nf_hint)ui.hint.classList.add('on'); }
 
 const api={ init,goto,begin,runScript,popup,closeDlg,persona,generateHome,
-  scenes:()=>SCENES,state:st,phase };
+  scenes:()=>SCENES,state:st,phase,sheet:img };
 return api; })();

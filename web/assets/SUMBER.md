@@ -14,3 +14,5 @@ here AND in the game colophon). Packs with no-redistribution clauses
 (Cainos, PIPOYA, LimeZu paid) must NEVER be committed — game-bundle only.
 All imported art is palette-graded to Tinta & Kopi at load (MALAM mode);
 Mee/Papuan cultural art is custom-only, never from packs (NORTH-STAR rule).
+
+| web/vendor/qrcodegen.js | QR Code generator library | Project Nayuki | MIT | https://www.nayuki.io/page/qr-code-generator-library (compiled JS from author site) |

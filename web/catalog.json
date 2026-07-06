@@ -311,5 +311,101 @@
   "tags": [
    "nature"
   ]
+ },
+ "karpet": {
+  "sheet": "floor",
+  "sx": 244,
+  "sy": 104,
+  "w": 48,
+  "h": 48,
+  "flat": true,
+  "tags": [
+   "interior"
+  ]
+ },
+ "sofa": {
+  "sheet": "intel",
+  "sx": 84,
+  "sy": 11,
+  "w": 24,
+  "h": 26,
+  "tags": [
+   "interior"
+  ]
+ },
+ "sofa-bawah": {
+  "sheet": "intel",
+  "sx": 43,
+  "sy": 0,
+  "w": 26,
+  "h": 12,
+  "tags": [
+   "interior"
+  ]
+ },
+ "sofa-atas": {
+  "sheet": "intel",
+  "sx": 43,
+  "sy": 20,
+  "w": 26,
+  "h": 12,
+  "tags": [
+   "interior"
+  ]
+ },
+ "bantal-duduk": {
+  "sheet": "intel",
+  "sx": 112,
+  "sy": 0,
+  "w": 16,
+  "h": 15,
+  "tags": [
+   "interior"
+  ]
+ },
+ "rak-buku": {
+  "custom": "rakBuku",
+  "tags": [
+   "interior"
+  ],
+  "interact": {
+   "type": "text",
+   "title": "Rak Buku",
+   "body": "Buku tamu, novel bekas, arsip koran. Satu kutipan terselip: “Ceritamu tetap milikmu.”"
+  }
+ },
+ "meja-bundar": {
+  "custom": "mejaBundar",
+  "tags": [
+   "interior",
+   "warung"
+  ]
+ },
+ "kasir": {
+  "custom": "kasir",
+  "tags": [
+   "interior",
+   "warung"
+  ],
+  "interact": {
+   "type": "text",
+   "title": "Mesin Kasir",
+   "body": "Kasir tua yang berdenting. Cangkir pertama selalu ditraktir Nona."
+  }
+ },
+ "tanaman-gantung": {
+  "custom": "tanamanGantung",
+  "flat": true,
+  "tags": [
+   "interior",
+   "nature"
+  ]
+ },
+ "kursi-bar": {
+  "custom": "kursiBar",
+  "tags": [
+   "interior",
+   "warung"
+  ]
  }
 }

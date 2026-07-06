@@ -322,15 +322,9 @@
   "decos": [
    {
     "type": "counter",
-    "x": 28,
+    "x": 24,
     "y": 96,
-    "w": 108
-   },
-   {
-    "type": "shelfJars",
-    "x": 56,
-    "y": 18,
-    "w": 40
+    "w": 112
    },
    {
     "type": "doormat",
@@ -347,7 +341,7 @@
    },
    {
     "component": "menu-besar",
-    "x": 102,
+    "x": 100,
     "y": 8
    },
    {
@@ -356,104 +350,165 @@
     "y": 0
    },
    {
-    "component": "rak-kue",
-    "x": 30,
-    "y": 76
+    "component": "tanaman-gantung",
+    "x": 50,
+    "y": 2
    },
    {
-    "component": "mesin-kopi",
-    "x": 118,
-    "y": 80
+    "component": "tanaman-gantung",
+    "x": 86,
+    "y": 2
+   },
+   {
+    "component": "frame",
+    "x": 58,
+    "y": 26,
+    "interact": {
+     "type": "text",
+     "title": "Bingkai Foto",
+     "body": "Jalan Kenangan di musim hujan. Ada yang menulis di baliknya: “pulang.”"
+    }
+   },
+   {
+    "component": "rak-kue",
+    "x": 28,
+    "y": 78
+   },
+   {
+    "component": "kasir",
+    "x": 98,
+    "y": 84
    },
    {
     "component": "cangkir",
-    "x": 98,
+    "x": 86,
     "y": 90
    },
    {
-    "component": "meja",
-    "x": 14,
-    "y": 150
+    "component": "mesin-kopi",
+    "x": 120,
+    "y": 80
    },
    {
-    "component": "kursi",
-    "x": 18,
+    "component": "kursi-bar",
+    "x": 30,
+    "y": 121
+   },
+   {
+    "component": "kursi-bar",
+    "x": 48,
+    "y": 121
+   },
+   {
+    "component": "karpet",
+    "x": 10,
+    "y": 126
+   },
+   {
+    "component": "sofa-bawah",
+    "x": 16,
+    "y": 124
+   },
+   {
+    "component": "sofa-atas",
+    "x": 16,
+    "y": 164
+   },
+   {
+    "component": "bantal-duduk",
+    "x": 52,
     "y": 140
    },
    {
-    "component": "cangkir",
+    "component": "meja-bundar",
     "x": 26,
-    "y": 146
-   },
-   {
-    "component": "meja",
-    "x": 90,
-    "y": 150
-   },
-   {
-    "component": "kursi",
-    "x": 112,
     "y": 142
    },
    {
     "component": "cangkir",
-    "x": 100,
-    "y": 146
+    "x": 30,
+    "y": 138
    },
    {
-    "component": "meja",
-    "x": 14,
-    "y": 202
+    "component": "kucing",
+    "x": 40,
+    "y": 154,
+    "interact": {
+     "type": "text",
+     "title": "Kucing Warung",
+     "body": "Prrr. Dia memilih kursi terbaik dan tidak berniat pindah."
+    }
+   },
+   {
+    "component": "rak-buku",
+    "x": 116,
+    "y": 124
+   },
+   {
+    "component": "meja-bundar",
+    "x": 98,
+    "y": 184
    },
    {
     "component": "cangkir",
-    "x": 22,
-    "y": 198
+    "x": 102,
+    "y": 180
    },
    {
-    "component": "meja",
-    "x": 90,
-    "y": 202
-   },
-   {
-    "component": "kursi",
-    "x": 94,
-    "y": 192
+    "component": "meja-bundar",
+    "x": 98,
+    "y": 222
    },
    {
     "component": "cangkir",
-    "x": 104,
-    "y": 198
+    "x": 102,
+    "y": 218
+   },
+   {
+    "component": "kursi-bar",
+    "x": 120,
+    "y": 222
    },
    {
     "component": "tanaman",
     "x": 4,
-    "y": 66
+    "y": 120
    },
    {
     "component": "tanaman",
-    "x": 128,
-    "y": 66
+    "x": 4,
+    "y": 204
+   },
+   {
+    "component": "tanaman",
+    "x": 132,
+    "y": 204
    }
   ],
   "npcs": [
    {
     "custom": "nonaApron",
     "x": 63,
-    "y": 70,
+    "y": 74,
     "static": "down"
    },
    {
     "k": "v1",
     "x": 26,
-    "y": 140,
+    "y": 128,
+    "static": "down"
+   },
+   {
+    "k": "old",
+    "x": 57,
+    "y": 144,
     "static": "down"
    },
    {
     "k": "woman",
-    "x": 106,
-    "y": 192,
-    "static": "down"
+    "x": 120,
+    "y": 178,
+    "static": "left"
    }
   ],
   "colliders": [
@@ -462,6 +517,12 @@
     0,
     144,
     96
+   ],
+   [
+    24,
+    94,
+    112,
+    26
    ],
    [
     0,
@@ -476,53 +537,107 @@
     256
    ],
    [
-    28,
-    96,
-    108,
-    24
+    30,
+    121,
+    8,
+    4
    ],
    [
-    14,
-    150,
-    38,
+    48,
+    121,
+    8,
+    4
+   ],
+   [
+    16,
+    124,
+    26,
     10
    ],
    [
-    90,
-    150,
-    38,
+    16,
+    164,
+    26,
     10
    ],
    [
-    14,
-    202,
-    38,
+    26,
+    142,
+    16,
+    8
+   ],
+   [
+    52,
+    140,
+    16,
     10
    ],
    [
-    90,
-    202,
-    38,
-    10
+    116,
+    124,
+    20,
+    12
+   ],
+   [
+    98,
+    184,
+    16,
+    8
+   ],
+   [
+    98,
+    222,
+    16,
+    8
+   ],
+   [
+    120,
+    222,
+    8,
+    4
    ],
    [
     4,
-    70,
+    120,
     10,
     6
    ],
    [
-    128,
-    70,
+    4,
+    204,
+    10,
+    6
+   ],
+   [
+    132,
+    204,
     10,
     6
    ]
   ],
+  "fx": [
+   {
+    "type": "pool",
+    "x": 65,
+    "y": 0,
+    "py": 30
+   },
+   {
+    "type": "steam",
+    "x": 34,
+    "y": 136
+   },
+   {
+    "type": "steam",
+    "x": 106,
+    "y": 178
+   }
+  ],
   "talk": {
-   "x": 28,
-   "y": 122,
-   "w": 92,
-   "h": 30
+   "x": 24,
+   "y": 120,
+   "w": 112,
+   "h": 24
   },
   "exits": [
    {
@@ -537,8 +652,8 @@
    }
   ]
  },
- "kantor": {
-  "name": "KANTOR — CUPLIKAN OLIGARKI",
+ "oli1": {
+  "name": "KANTOR DINAS",
   "ground": "interior",
   "W": 144,
   "H": 200,
@@ -560,12 +675,12 @@
    },
    {
     "component": "poster",
-    "x": 60,
+    "x": 56,
     "y": 16,
     "interact": {
      "type": "text",
      "title": "Poster Kantor",
-     "body": "\"VISI PEMBANGUNAN 2045\" — disponsori entitas yang tidak ingin disebut namanya."
+     "body": "“VISI PEMBANGUNAN 2045” — disponsori entitas yang tidak ingin disebut namanya."
     }
    },
    {
@@ -575,41 +690,35 @@
    },
    {
     "component": "meja",
-    "x": 18,
-    "y": 92
-   },
-   {
-    "component": "meja",
-    "x": 88,
-    "y": 92
+    "x": 52,
+    "y": 84
    },
    {
     "component": "cangkir",
-    "x": 30,
-    "y": 88
+    "x": 62,
+    "y": 80
    },
    {
-    "component": "tanaman",
-    "x": 128,
-    "y": 60
+    "component": "rak-buku",
+    "x": 112,
+    "y": 100
    },
    {
     "component": "tanaman",
     "x": 4,
     "y": 60
+   },
+   {
+    "component": "tanaman",
+    "x": 128,
+    "y": 60
    }
   ],
   "npcs": [
    {
-    "k": "v4",
-    "x": 30,
-    "y": 82,
-    "static": "down"
-   },
-   {
     "k": "old",
-    "x": 100,
-    "y": 82,
+    "x": 68,
+    "y": 76,
     "static": "down"
    }
   ],
@@ -618,7 +727,7 @@
     0,
     0,
     144,
-    70
+    56
    ],
    [
     0,
@@ -633,34 +742,391 @@
     200
    ],
    [
-    18,
-    92,
+    52,
+    84,
     38,
     10
    ],
    [
-    88,
-    92,
-    38,
-    10
+    112,
+    100,
+    20,
+    12
+   ],
+   [
+    4,
+    64,
+    10,
+    6
+   ],
+   [
+    128,
+    64,
+    10,
+    6
    ]
   ],
   "talk": {
-   "x": 18,
+   "x": 40,
+   "y": 98,
+   "w": 62,
+   "h": 26
+  },
+  "exits": [
+   {
+    "x": 54,
+    "y": 186,
+    "w": 36,
+    "h": 14,
+    "label": "✦ RESTORAN",
+    "to": "oli2"
+   }
+  ]
+ },
+ "oli2": {
+  "name": "RESTORAN PADANG JAYA",
+  "ground": "interior",
+  "W": 144,
+  "H": 220,
+  "wallH": 56,
+  "spawn": [
+   72,
+   190
+  ],
+  "placements": [
+   {
+    "component": "window-l",
+    "x": 8,
+    "y": 12
+   },
+   {
+    "component": "menu-besar",
+    "x": 100,
+    "y": 8,
+    "interact": {
+     "type": "text",
+     "title": "Menu Restoran",
+     "body": "Rendang premium · Ayam pop · Nasi tambo ciek — harga menyesuaikan siapa yang membayar."
+    }
+   },
+   {
+    "component": "lampu-gantung",
+    "x": 34,
+    "y": 0
+   },
+   {
+    "component": "lampu-gantung",
+    "x": 90,
+    "y": 0
+   },
+   {
+    "component": "tanaman-gantung",
+    "x": 66,
+    "y": 2
+   },
+   {
+    "component": "karpet",
+    "x": 48,
+    "y": 110
+   },
+   {
+    "component": "meja-bundar",
+    "x": 26,
+    "y": 96
+   },
+   {
+    "component": "cangkir",
+    "x": 30,
+    "y": 92
+   },
+   {
+    "component": "meja-bundar",
+    "x": 98,
+    "y": 96
+   },
+   {
+    "component": "cangkir",
+    "x": 102,
+    "y": 92
+   },
+   {
+    "component": "meja-bundar",
+    "x": 26,
+    "y": 152
+   },
+   {
+    "component": "cangkir",
+    "x": 30,
+    "y": 148
+   },
+   {
+    "component": "meja-bundar",
+    "x": 98,
+    "y": 152
+   },
+   {
+    "component": "cangkir",
+    "x": 102,
+    "y": 148
+   },
+   {
+    "component": "tanaman",
+    "x": 4,
+    "y": 60
+   },
+   {
+    "component": "tanaman",
+    "x": 128,
+    "y": 60
+   },
+   {
+    "component": "tanaman",
+    "x": 4,
+    "y": 196
+   },
+   {
+    "component": "tanaman",
+    "x": 128,
+    "y": 196
+   }
+  ],
+  "npcs": [
+   {
+    "k": "v1",
+    "x": 106,
+    "y": 88,
+    "static": "down"
+   },
+   {
+    "k": "woman",
+    "x": 34,
+    "y": 144,
+    "static": "right"
+   },
+   {
+    "k": "boy",
+    "x": 124,
+    "y": 100,
+    "y0": 100,
+    "y1": 170
+   }
+  ],
+  "colliders": [
+   [
+    0,
+    0,
+    144,
+    56
+   ],
+   [
+    0,
+    0,
+    5,
+    220
+   ],
+   [
+    139,
+    0,
+    5,
+    220
+   ],
+   [
+    26,
+    96,
+    16,
+    8
+   ],
+   [
+    98,
+    96,
+    16,
+    8
+   ],
+   [
+    26,
+    152,
+    16,
+    8
+   ],
+   [
+    98,
+    152,
+    16,
+    8
+   ],
+   [
+    4,
+    64,
+    10,
+    6
+   ],
+   [
+    128,
+    64,
+    10,
+    6
+   ],
+   [
+    4,
+    200,
+    10,
+    6
+   ],
+   [
+    128,
+    200,
+    10,
+    6
+   ]
+  ],
+  "talk": {
+   "x": 84,
    "y": 104,
-   "w": 108,
+   "w": 50,
    "h": 28
   },
   "exits": [
    {
-    "x": 56,
-    "y": 184,
-    "w": 34,
+    "x": 54,
+    "y": 206,
+    "w": 36,
     "h": 14,
-    "label": "✦ KEMBALI",
-    "to": "street",
+    "label": "✦ KONFERENSI PERS",
+    "to": "oli3"
+   }
+  ]
+ },
+ "oli3": {
+  "name": "KONFERENSI PERS",
+  "ground": "interior",
+  "W": 144,
+  "H": 200,
+  "wallH": 56,
+  "spawn": [
+   72,
+   100
+  ],
+  "placements": [
+   {
+    "component": "window-l",
+    "x": 8,
+    "y": 12
+   },
+   {
+    "component": "window-l",
+    "x": 96,
+    "y": 12
+   },
+   {
+    "component": "poster",
+    "x": 56,
+    "y": 16,
+    "interact": {
+     "type": "text",
+     "title": "Spanduk",
+     "body": "“TRANSPARANSI UNTUK NEGERI” — dicetak dua hari sebelum konferensi. Tintanya belum kering."
+    }
+   },
+   {
+    "component": "lampu-gantung",
+    "x": 58,
+    "y": 0
+   },
+   {
+    "component": "meja",
+    "x": 52,
+    "y": 78
+   },
+   {
+    "component": "papan",
+    "x": 66,
+    "y": 64
+   },
+   {
+    "component": "tanaman",
+    "x": 4,
+    "y": 60
+   },
+   {
+    "component": "tanaman",
+    "x": 128,
+    "y": 60
+   }
+  ],
+  "npcs": [
+   {
+    "k": "woman",
+    "x": 40,
+    "y": 136,
+    "static": "up"
+   },
+   {
+    "k": "old",
+    "x": 72,
+    "y": 142,
+    "static": "down"
+   },
+   {
+    "k": "v1",
+    "x": 104,
+    "y": 136,
+    "static": "up"
+   }
+  ],
+  "colliders": [
+   [
+    0,
+    0,
+    144,
+    56
+   ],
+   [
+    0,
+    0,
+    5,
+    200
+   ],
+   [
+    139,
+    0,
+    5,
+    200
+   ],
+   [
+    52,
+    78,
+    38,
+    10
+   ],
+   [
+    4,
+    64,
+    10,
+    6
+   ],
+   [
+    128,
+    64,
+    10,
+    6
+   ]
+  ],
+  "talk": {
+   "x": 30,
+   "y": 118,
+   "w": 84,
+   "h": 34
+  },
+  "exits": [
+   {
+    "x": 54,
+    "y": 186,
+    "w": 36,
+    "h": 14,
+    "label": "✦ KEMBALI KE WARUNG",
+    "to": "warung",
     "sx": 72,
-    "sy": 106
+    "sy": 224
    }
   ]
  }

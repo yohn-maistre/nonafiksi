@@ -12,6 +12,7 @@ SHEETS = {
     'boy': 'char-boy-walk.png', 'v1': 'char-villager-walk.png',
     'v4': 'char-villager4-walk.png', 'woman': 'char-woman-walk.png',
     'old': 'char-oldwoman-sheet.png', 'cat': 'char-cat-sheet.png',
+    'floor': 'TilesetInteriorFloor.png', 'intel': 'InteriorElements.png',
 }
 
 def b64(path):
@@ -20,6 +21,7 @@ def b64(path):
 def main():
     html = open(W('index.html')).read()
     engine = open(W('engine.js')).read()
+    vendor = open(W('vendor', 'qrcodegen.js')).read()
     game = open(W('game.js')).read()
     catalog = json.load(open(W('catalog.json')))
     scenes = json.load(open(W('aksara', 'scenes.json')))
@@ -29,7 +31,8 @@ def main():
             f"const NF_CATALOG={json.dumps(catalog)};"
             f"const NF_SCENES={json.dumps(scenes)};")
     html = html.replace('__SCRIPTS__',
-        f'<script>{engine}</script>\n<script>{data}</script>\n<script>{game}</script>')
+        f'<script>{engine}</script>\n<script>{vendor}</script>\n'
+        f'<script>{data}</script>\n<script>{game}</script>')
     fdir = W('fonts') if os.path.exists(W('fonts', 'ps2p.b64')) else SCRATCH
     html = html.replace('__PS2P__', open(os.path.join(fdir, 'ps2p.b64')).read().strip())
     html = html.replace('__VT323__', open(os.path.join(fdir, 'vt323.b64')).read().strip())
