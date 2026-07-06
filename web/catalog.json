@@ -13,61 +13,31 @@
  "rumah-a": {
   "sheet": "house",
   "sx": 0,
-  "sy": 241,
-  "w": 80,
-  "h": 63,
+  "sy": 0,
+  "w": 64,
+  "h": 48,
   "tags": [
    "kampung"
   ]
  },
  "rumah-b": {
   "sheet": "house",
-  "sx": 0,
-  "sy": 305,
-  "w": 80,
-  "h": 63,
+  "sx": 64,
+  "sy": 0,
+  "w": 64,
+  "h": 48,
   "tags": [
    "kampung"
   ]
  },
  "rumah-c": {
   "sheet": "house",
-  "sx": 96,
-  "sy": 176,
-  "w": 48,
-  "h": 46,
-  "tags": [
-   "kampung"
-  ]
- },
- "rumah-d": {
-  "sheet": "house",
-  "sx": 465,
-  "sy": 128,
-  "w": 63,
+  "sx": 128,
+  "sy": 0,
+  "w": 64,
   "h": 48,
   "tags": [
    "kampung"
-  ]
- },
- "pohon": {
-  "sheet": "nature",
-  "sx": 210,
-  "sy": 132,
-  "w": 29,
-  "h": 27,
-  "tags": [
-   "nature"
-  ]
- },
- "pohon2": {
-  "sheet": "nature",
-  "sx": 258,
-  "sy": 132,
-  "w": 29,
-  "h": 27,
-  "tags": [
-   "nature"
   ]
  },
  "pohon-besar": {
@@ -76,16 +46,6 @@
   "sy": 83,
   "w": 61,
   "h": 44,
-  "tags": [
-   "nature"
-  ]
- },
- "semak": {
-  "sheet": "nature",
-  "sx": 64,
-  "sy": 145,
-  "w": 32,
-  "h": 30,
   "tags": [
    "nature"
   ]
@@ -273,6 +233,83 @@
   "h": 4,
   "tags": [
    "kampung"
+  ]
+ },
+ "rumah-merah": {
+  "sheet": "house",
+  "sx": 192,
+  "sy": 0,
+  "w": 48,
+  "h": 48,
+  "tags": [
+   "kampung"
+  ]
+ },
+ "toko-biru": {
+  "sheet": "house",
+  "sx": 256,
+  "sy": 0,
+  "w": 48,
+  "h": 48,
+  "tags": [
+   "kota",
+   "kampung"
+  ]
+ },
+ "gubuk": {
+  "sheet": "house",
+  "sx": 0,
+  "sy": 176,
+  "w": 48,
+  "h": 46,
+  "tags": [
+   "kampung"
+  ]
+ },
+ "kios-jajan": {
+  "sheet": "house",
+  "sx": 0,
+  "sy": 241,
+  "w": 80,
+  "h": 63,
+  "tags": [
+   "kampung",
+   "kota"
+  ],
+  "interact": {
+   "type": "text",
+   "title": "Kios Jajanan",
+   "body": "Bakso, sate ayam, es teh manis. Buka sampai malam."
+  }
+ },
+ "batu": {
+  "sheet": "nature",
+  "sx": 64,
+  "sy": 145,
+  "w": 32,
+  "h": 30,
+  "tags": [
+   "nature"
+  ]
+ },
+ "semak-hijau": {
+  "sheet": "nature",
+  "sx": 210,
+  "sy": 132,
+  "w": 29,
+  "h": 27,
+  "tags": [
+   "nature"
+  ]
+ },
+ "pohon": {
+  "sheet": "nature",
+  "sx": 2,
+  "sy": 32,
+  "w": 44,
+  "h": 48,
+  "tags": [
+   "nature"
   ]
  }
 }

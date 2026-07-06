@@ -111,24 +111,41 @@ const DIRCOL={down:0,up:1,left:2,right:3};
 function drawChar(k,x,y,dir,frame){
   X.drawImage(img(k),DIRCOL[dir]*16,(frame%4)*16,16,16,(x-8)|0,(y-16)|0,16,16); }
 
+// grounds are phase-aware: grass is GREEN at noon, lamps own the night.
+const GROUND_PAL={
+ pagi:{grass:'#4f7040',tuft:'#3f5c33',path:'#a3855c',fleck:'rgba(255,244,214,.12)',
+   wall:'#3d2c1d',floor:'#4a3626',seam:'rgba(0,0,0,.14)'},
+ siang:{grass:'#5a8046',tuft:'#476a38',path:'#b29467',fleck:'rgba(205,230,255,.16)',
+   wall:'#43301f',floor:'#54402c',seam:'rgba(0,0,0,.12)'},
+ sore:{grass:'#6b6238',tuft:'#55492c',path:'#a37f52',fleck:'rgba(255,190,120,.13)',
+   wall:'#38281a',floor:'#443121',seam:'rgba(60,20,0,.18)'},
+ malam:{grass:'#241a12',tuft:'#1c140d',path:'#2f2317',fleck:'rgba(242,232,213,.05)',
+   wall:'#2a1d14',floor:'#3a2a1c',seam:'rgba(0,0,0,.22)'}};
+const isDark=()=>{const p=phase();return p==='malam'||p==='sore';};
 const GROUNDS = {
- street(sc,t){ rect(C.batu,0,0,sc.W,sc.H);
-   for(let y=0;y<sc.H;y+=6)for(let x=0;x<sc.W;x+=6)
-     if(rnd(x,y)>.82)rect('rgba(0,0,0,.2)',x+(rnd(y,x)*4|0),y+(rnd(x+1,y)*4|0),2,1);
-   const p=sc.path||[40,64]; rect(C.batu2,p[0],0,p[1],sc.H);
-   for(let y=0;y<sc.H;y+=6)for(let x=p[0]+2;x<p[0]+p[1]-2;x+=6)
-     if(rnd(x,y)>.86)rect('rgba(242,232,213,.05)',x,y,3,1); },
- interior(sc,t){ const wh=sc.wallH||56;
-   rect(C.kayu,0,0,sc.W,wh);
-   for(let y=12;y<wh;y+=14)rect('rgba(0,0,0,.18)',0,y,sc.W,1);
-   rect(C.kayu2,0,wh,sc.W,sc.H-wh);
-   for(let y=wh+6;y<sc.H;y+=22)rect('rgba(0,0,0,.22)',0,y,sc.W,1);
-   for(let x=0;x<sc.W;x+=26)rect('rgba(0,0,0,.12)',x,wh,1,sc.H-wh); }
+ street(sc,t){ const G=GROUND_PAL[phase()];
+   rect(G.grass,0,0,sc.W,sc.H);
+   for(let y=0;y<sc.H;y+=6)for(let x=0;x<sc.W;x+=6){
+     const r=rnd(x,y);
+     if(r>.86)rect(G.tuft,x+(rnd(y,x)*4|0),y+(rnd(x+1,y)*4|0),2,2);
+     else if(r>.80)rect(G.tuft,x+(rnd(y,x+2)*4|0),y+(rnd(x+3,y)*4|0),1,3); }
+   const p=sc.path||[40,64]; rect(G.path,p[0],0,p[1],sc.H);
+   for(let y=0;y<sc.H;y+=6)for(let x=p[0]+2;x<p[0]+p[1]-2;x+=6){
+     if(rnd(x,y)>.86)rect(G.fleck,x,y,3,1);
+     if(rnd(x+1,y)>.9)rect('rgba(0,0,0,.12)',x+3,y+3,2,1); } },
+ interior(sc,t){ const wh=sc.wallH||56, G=GROUND_PAL[phase()];
+   rect(G.wall,0,0,sc.W,wh);
+   for(let y=12;y<wh;y+=14)rect(G.seam,0,y,sc.W,1);
+   rect(G.floor,0,wh,sc.W,sc.H-wh);
+   for(let y=wh+6;y<sc.H;y+=22)rect(G.seam,0,y,sc.W,1);
+   for(let x=0;x<sc.W;x+=26)rect('rgba(0,0,0,.10)',x,wh,1,sc.H-wh); }
 };
 
 const FX = {
- glowFlicker(pl,t){ glow(pl.x+(pl.gx||0),pl.y+(pl.gy||0),pl.r||26,(pl.a||.22)+.03*Math.sin(t/290+pl.x)); },
- pool(pl,t){ X.fillStyle='rgba(227,166,47,.08)'; X.beginPath();
+ glowFlicker(pl,t){ if(!isDark())return;
+   const amp=phase()==='malam'?1:.55; // sore = lamps waking up, malam = full ember
+   glow(pl.x+(pl.gx||0),pl.y+(pl.gy||0),pl.r||26,((pl.a||.22)+.03*Math.sin(t/290+pl.x))*amp); },
+ pool(pl,t){ if(!isDark())return; X.fillStyle='rgba(227,166,47,.08)'; X.beginPath();
    X.ellipse(pl.x+(pl.gx||0),pl.y+(pl.py||24),13,5,0,0,7); X.fill(); },
  stars(pl,t){ X.fillStyle='#cfd4ea';
    for(let i=0;i<5;i++){ if(((t/400|0)+i)%4)
@@ -275,7 +292,8 @@ function bindUI(){
     ['pointerup','pointerleave','pointercancel'].forEach(ev=>b.addEventListener(ev,()=>keys[k]=false)); });
   const KM={ArrowLeft:'L',a:'L',ArrowRight:'R',d:'R',ArrowUp:'U',w:'U',ArrowDown:'D',s:'D'};
   addEventListener('keydown',e=>{ if(document.activeElement===ui.dinput){ if(e.key==='Enter')advDlg(); return; }
-    if(KM[e.key])keys[KM[e.key]]=true; if(e.key==='e'||e.key==='Enter')act(); });
+    if(KM[e.key]){e.preventDefault();keys[KM[e.key]]=true;}
+    if(e.key==='e'||e.key==='Enter'||e.key===' '){e.preventDefault();act();} });
   addEventListener('keyup',e=>{ if(KM[e.key])keys[KM[e.key]]=false; });
   ui.ctx.addEventListener('pointerdown',e=>{e.preventDefault();act();});
   ui.dlg.addEventListener('pointerdown',e=>{ if(e.target===ui.dinput||e.target.tagName==='BUTTON')return;

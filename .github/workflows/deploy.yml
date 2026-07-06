@@ -1,11 +1,39 @@
 name: deploy
-on: workflow_dispatch   # manual only until CLOUDFLARE_API_TOKEN secret exists
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['web/**', 'worker/**', 'wrangler.toml', 'tools/build.py', '.github/workflows/deploy.yml']
+
+env:
+  CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+  CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
 jobs:
-  worker:
+  deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Deploy Worker
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+
+      - name: Bootstrap D1 (idempotent) and wire database_id
+        run: |
+          npx wrangler@3 d1 create nonafiksi 2>/dev/null || true
+          ID=$(npx wrangler@3 d1 list --json | node -e "let d='';process.stdin.on('data',c=>d+=c).on('end',()=>{const x=JSON.parse(d).find(r=>r.name==='nonafiksi');console.log(x.uuid)})")
+          echo "D1 id: $ID"
+          sed -i "s/TBD-after-wrangler-d1-create/$ID/" wrangler.toml
+          npx wrangler@3 d1 execute nonafiksi --remote --file worker/schema.sql
+
+      - name: Deploy Worker (API + NonaAgent DO)
+        run: npx wrangler@3 deploy
+
+      - name: Build single-file game
+        run: |
+          python3 tools/build.py
+          mkdir -p pages-dist && cp dist/nonafiksi.html pages-dist/index.html
+
+      - name: Deploy Pages
+        run: |
+          npx wrangler@3 pages project create nonafiksi --production-branch=main 2>/dev/null || true
+          npx wrangler@3 pages deploy pages-dist --project-name=nonafiksi --commit-dirty=true

@@ -30,8 +30,9 @@ def main():
             f"const NF_SCENES={json.dumps(scenes)};")
     html = html.replace('__SCRIPTS__',
         f'<script>{engine}</script>\n<script>{data}</script>\n<script>{game}</script>')
-    html = html.replace('__PS2P__', open(f'{SCRATCH}/ps2p.b64').read().strip())
-    html = html.replace('__VT323__', open(f'{SCRATCH}/vt323.b64').read().strip())
+    fdir = W('fonts') if os.path.exists(W('fonts', 'ps2p.b64')) else SCRATCH
+    html = html.replace('__PS2P__', open(os.path.join(fdir, 'ps2p.b64')).read().strip())
+    html = html.replace('__VT323__', open(os.path.join(fdir, 'vt323.b64')).read().strip())
     leftover = re.sub(r'base64,[A-Za-z0-9+/=]+', '', html)
     assert '__' not in leftover.replace('__proto__', ''), 'placeholder left: ' + \
         ','.join(set(re.findall(r'__[A-Z0-9]+__', leftover)))
