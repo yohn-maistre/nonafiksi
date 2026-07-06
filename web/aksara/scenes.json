@@ -650,7 +650,8 @@
     "sx": 72,
     "sy": 106
    }
-  ]
+  ],
+  "floorStyle": "checker"
  },
  "oli1": {
   "name": "KANTOR DINAS",
@@ -994,7 +995,8 @@
     "label": "✦ KONFERENSI PERS",
     "to": "oli3"
    }
-  ]
+  ],
+  "floorStyle": "checker"
  },
  "oli3": {
   "name": "KONFERENSI PERS",

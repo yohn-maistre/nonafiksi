@@ -148,8 +148,13 @@ const GROUNDS = {
    rect(G.wall,0,0,sc.W,wh);
    for(let y=12;y<wh;y+=14)rect(G.seam,0,y,sc.W,1);
    rect(G.floor,0,wh,sc.W,sc.H-wh);
-   for(let y=wh+6;y<sc.H;y+=22)rect(G.seam,0,y,sc.W,1);
-   for(let x=0;x<sc.W;x+=26)rect('rgba(0,0,0,.10)',x,wh,1,sc.H-wh); }
+   if(sc.floorStyle==='checker'){ // proper-cafe floor (Yose's references)
+     for(let y=wh;y<sc.H;y+=8)for(let x=0;x<sc.W;x+=8)
+       if((x/8+(y-wh)/8)%2)rect(G.seam,x,y,8,8);
+   } else {
+     for(let y=wh+6;y<sc.H;y+=22)rect(G.seam,0,y,sc.W,1);
+     for(let x=0;x<sc.W;x+=26)rect('rgba(0,0,0,.10)',x,wh,1,sc.H-wh);
+   } }
 };
 
 const FX = {
