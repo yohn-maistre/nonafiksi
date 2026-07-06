@@ -201,3 +201,22 @@ jungle, swamp, savannah, volcano backdrops, ruko/kota), cafe interior
 packs from Yose's references (Penzilla, CaptainSkolot, LimeZu re-check),
 pixel-editor/procgen/LPC tooling verdicts. Next wave when it lands:
 modern-cozy warung interior + biome catalog expansion + editor decision.
+
+## 2026-07-06 (afternoon 2) — Biome/cafe/tooling scout returned
+
+Cookbook EXPANSION 2 appended (docs/research/topdown-assets-cookbook.md,
+585 lines, licenses quoted). Verdicts: NO free stilt-house or rice-paddy
+pack exists ANYWHERE — kampung = Ninja+Serene remaps + ~3 custom stilt
+sprites; sawah = CC0 water autotile under owned CC0 rice sprites (recipe,
+not gap). Savannah: LPC Baobabs CC-BY (botanically right for NTT). Volcano:
+ansimuz Mountain Dusk parallax CC0 (one silhouette edit = Merapi). Kota:
++MetroCity chars CC0; sea/boats: Kenney Pirate Pack CC0. CAFE: Yose's
+references BOTH fail — CaptainSkolot badge contradicts its own prose
+(BY-NC-SA, DO-NOT-USE), Penzilla = paid per-project license (skip); stack
+= Kenney Indoors + Ninja CC0 + Powered By Decaf (free commercial, private
+store) + LimeZu $1.50 gold standard. TOOLING: no embeddable pixel-editor
+lib exists -> build ours (~200 lines); LPC generator CC-BY-SA/GPL + 64px
+-> skip; rot.js dungeon-shaped -> skip; ADOPT kchapelier/
+wavefunctioncollapse (MIT) as optional agent-terrain brain; autotiling
+vanilla. Paid tail parked to needs-from-Yose: LimeZu $1.50 + Hana Caraka
+(Bagong Games, INDONESIAN-MADE) $4.99 ≈ $6.50 total.
