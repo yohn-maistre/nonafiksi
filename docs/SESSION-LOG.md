@@ -3,6 +3,64 @@
 Written for a reader with amnesia. Each entry: what happened, what's true
 now, what's next.
 
+## 2026-07-06 (arc 2) — v0.6: title screen, joystick, cafe makeover, QR card, Oligarki Bab 1, NIM home-builder
+
+Yose's second vision dump executed same-day (plan:
+/root/.claude/plans/fuzzy-chasing-sprout.md "Arc 2"):
+
+- **Controls**: D-pad removed; floating thumb joystick spawns faint at the
+  touch point anywhere on the screen (analog speed, deadzone 6px/28px clamp);
+  one-time "GESER JEMPOLMU" hint (localStorage nf_hint). Ctx action button
+  moved BELOW the canvas (it overlapped dialogs). Dialogs got a ✕ close.
+- **Title screen**: canvas attract mode (street, slow camera drift) + MULAI /
+  PULANG-KE-RUMAHMU / KREDIT; character select (boy/v1/v4/woman, walking
+  previews, localStorage nf_char). First-timers now start IN the warung.
+- **Warung v3**: checkerboard floor (engine `floorStyle:'checker'`, from
+  Yose's reference screenshots), lounge corner (Ninja InteriorElements sofas
+  + pouffe + TilesetInteriorFloor rug — crops verified visually), bookshelf/
+  register/hanging-plants string-map sprites, bar stools, kucing with
+  periksa. Catalog now 40 components.
+- **Walk-home arc**: interview no longer teleports; pulang exit unlocks, first
+  home entry offers the **QR profile card** (vendored Project Nayuki
+  qrcodegen, MIT, author-compiled JS — functionally tested; SUMBER.md row).
+  Card = canvas 384×640, avatar + nama + @handle + QR to
+  nonafiksi.pages.dev/@handle, navigator.share with download fallback.
+  Door menu re-shares anytime. Interview added a vibe question
+  (hangat/rapi/ramai → generateHome varies).
+- **Aksara returning-chat**: phase-keyed small talk pools, then menu with
+  **choices + free-typed input** (engine `onfree`); typed text → curhat
+  drawer (localStorage nf_curhat, capped 20) + POST /api/bicara when online.
+  Curhat menu item unlocked as local-notebook version (honest framing).
+- **Oligarki Bab 1**: 3 scenes (oli1 kantor dinas / oli2 restoran / oli3
+  konferensi pers), play AS Pak Bakri (fiksi-komposit disclaimer popup,
+  playerSheet swap), euphemism choices with varied deadpan replies,
+  worsening-headline gag, Aksara colophon on return. Old kantor cuplikan
+  scene removed.
+- **Worker v2**: POST/GET /api/rumah (D1 `rumah` table, size caps),
+  /@handle honest HTML pages (placeholder never lies 404), POST /api/bangun
+  — NIM deepseek-v4-pro designs home decor, **deterministic validator gates
+  everything** (catalog membership, bounds, door zone, cap 10); client
+  applyPlan re-validates + falls back to deterministic generateHome. CI got
+  an optional NIM_API_KEY secret-put step.
+- **Research**: docs/research/npc-steering-cookbook.md (scout, receipts
+  inside): NeMo Guardrails library CANNOT run on Workers; NemoGuard guard
+  MODELS are callable via same NIM key; Groq strict json_schema only on
+  gpt-oss models; Gemini = strongest Indonesian lane; full Nona system-
+  prompt contract draft included.
+
+**Deploy state**: run 28817911523 — Pages ✅ (v0.6 LIVE at
+nonafiksi.pages.dev, verified strings in prod), D1 step ❌ (token still
+lacks D1:Edit + Workers Scripts:Edit — Yose confirmed he'll add), Worker
+skipped. When token is fixed: re-run workflow, everything bootstraps.
+**Client API base**: localStorage `nf_api` (empty = offline mode); after
+first successful worker deploy, hardcode the workers.dev URL in game.js and
+add a Pages `_redirects` for /@handle → worker.
+
+**Needs-from-Yose**: (1) token scopes ↑, (2) NIM_API_KEY as repo secret,
+(3) playtest v06 (phone copy: nonafiksi-v06.html) — joystick feel, title,
+cafe, card share, Oligarki; (4) unchanged ledger (domain ~1 month, Mayar,
+paid asset tail ~$6.50, Bapa Benny, song licensing).
+
 ## 2026-07-05 (later) — Name confirmed; Nona Aksara; warungs are presses
 
 Yose confirmed **NonaFiksi** as the product name and overturned (correctly)
