@@ -40,6 +40,16 @@ and in-fiction she is the presskeeper and witness, never the author.
    with their stories, and editable later. Editing = editing the world
    manifest (move a building, rename a shop, add a zone), never raw pixels.
    Worlds GROW as their owner presses more stories — density over size.
+   **World grammar (Yose, 2026-07-06): Eastward density × Pokémon
+   interactivity, fully modular.** The engine exposes a COMPONENT CATALOG
+   (buildings, props, NPCs, zone types — each entry: sheet coords, size,
+   collider, optional interaction) and agents BUILD whole worlds from it:
+   pick a world type (kampung/kota/pantai/…), place components, attach
+   story. Pokémon rule: everything answerable — signs read, pots inspect,
+   NPCs speak, doors open ("periksa" on any component). A story manifest
+   is therefore: world-type + component placements + interaction texts +
+   scene graph. Agents compose; the catalog constrains; the style stays
+   coherent by construction.
 2. **Story Press** — Nona Aksara interviews you (characters, decision
    points, place, stakes — a tabletop-GM session), recaps ("so your story
    goes something like this…"), and the thought-bubble opens on your
