@@ -1,0 +1,21 @@
+# NonaFiksi API — Cloudflare Workers free plan (see docs/DEPLOY.md)
+name = "nonafiksi-api"
+main = "worker/index.js"
+compatibility_date = "2026-07-01"
+
+# D1: canonical cross-character store (users, kopi, story manifests)
+# create with: wrangler d1 create nonafiksi  → paste database_id here
+[[d1_databases]]
+binding = "DB"
+database_name = "nonafiksi"
+database_id = "TBD-after-wrangler-d1-create"
+
+# Durable Object: one NonaAgent per user — interview memory lives in the
+# DO's embedded SQLite (free plan requires new_sqlite_classes)
+[[durable_objects.bindings]]
+name = "NONA"
+class_name = "NonaAgent"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["NonaAgent"]

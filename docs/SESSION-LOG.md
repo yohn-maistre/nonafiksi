@@ -110,3 +110,34 @@ line). DO-NOT-USE list: Sprout Lands free (non-commercial), Cainos/PIPOYA
 AVOID — license claims unbacked (AI output likely uncopyrightable, no
 provenance); CC0 haul makes them unnecessary. Plan: palette-remap ingestion
 (quantize all imports to Tinta & Kopi ramp) = style coherence across packs.
+
+## 2026-07-06 (morning) — Proto Jalan Kenangan + real assets + backend scaffold
+
+Street renamed JALAN KENANGAN (Yose, after the song — NOTE: an actual MIDI
+medley of "Sepanjang Jalan Kenangan" needs composition licensing; original
+chiptune inspired-by is the safe path. Parked.)
+
+Shipped proto-03 (docs/design/proto-jalan-kenangan-01.html + phone copy,
+221KB self-contained): REAL CC0 assets — Ninja Adventure houses/trees/
+villagers/cat (downloaded via itch download_url flow, 89MB zip, extracted
+5.2MB of needed sheets, zip deleted), palette-graded to Tinta & Kopi at
+load with MALAM/ASLI toggle in the HUD (the remap pipeline, live). Bigger
+characters via lower internal res (144x256, chars 16px native = ~11% screen
+width vs 8% before). NPCs patrol with 4-dir walk anims. Known round-1
+seams: sheet block coordinates eyeballed (houses certain, tree crop may
+clip), NPC walk-direction row mapping unverified (DIRROW constant, one-line
+fix), interior still procedural. Assets committed to web/assets/ with
+SUMBER.md ledger (CC0-only rule).
+
+Backend scaffolded per agent-memory research verdict (docs/research/
+agent-memory-cookbook.md): Cloudflare Agents pattern — Worker routes +
+NonaAgent Durable Object (per-user SQLite memory: episodic + distilled
+facts, free plan new_sqlite_classes VERIFIED) + D1 canonical store
+(users/kopi/stories with unlisted-by-default) + LLM gateway stub with
+scripted Layer-0 fallback; guardrail reducer owns all state. PydanticAI
+assigned to the GitHub Actions batch lane (distillation/compilation).
+Mastra/LangGraph JS eliminated (Workers breakage, receipts in cookbook);
+Letta disqualified (3-agent hosted cap). Deploy: scaffold + CI workflow
+ready, blocked on ONE Yose action (docs/DEPLOY.md: Option A CF API token
+recommended vs Option B public repo). Kenney city + OGA farm (rice/
+cassava/coffee!) + beach sheets also in web/assets for next protos.
