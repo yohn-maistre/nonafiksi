@@ -94,7 +94,9 @@ const wire = (api)=>{
   const pulang = S.street.exits.find(e=>e.id==='pulang');
   const refreshPulang = ()=>{ if(api.persona.get()) delete pulang.locked;
     else pulang.locked='Rumahmu belum dibangun. Bicaralah dengan Nona di warung. ✦'; };
-  const p0 = api.persona.get(); if(p0) buildRumah(p0);
+  const p0 = api.persona.get();
+  if(p0&&!p0.handle){ p0.handle=slug(p0.nama); api.persona.set(p0); } // v05 saves
+  if(p0) buildRumah(p0);
   refreshPulang();
 
   // ---- curhat drawer: typed stories persist locally until the press wakes ----
@@ -161,11 +163,25 @@ const wire = (api)=>{
       'WARTAWAN (FIKSI)'); };
 
   // ---- Nona Aksara di warung ----
+  // She is not a menu. She notices you (time, how often you come, what you've
+  // trusted her with) and stories arrive as things she HEARD, not products.
   const SMALL={
     pagi:["Pagi. Kopi pertama selalu yang paling jujur.","Roti baru keluar — baunya seperti niat baik."],
     siang:["Siang begini cerita datang lebih pelan, tapi lebih dalam.","Panas di luar. Duduk dulu, dingin dulu."],
     sore:["Sore itu jam emas percetakan — semua orang tiba-tiba ingin bercerita.","Lampu-lampu mulai kunyalakan satu per satu."],
     malam:["Malam. Jam paling ramai kisah, paling sepi jalan.","Dengar jangkrik di luar? Koor tetap warung ini."]};
+  const opener=(per,n)=>{ const ph=api.phase();
+    let cur=[]; try{cur=JSON.parse(localStorage.nf_curhat||'[]');}catch(e){}
+    if(cur.length&&n%4===3)
+      return "Cerita yang kau titipkan tempo hari — masih kusimpan di laci. Kadang kubaca ulang kalau warung sepi. ✦";
+    if(ph==='malam'&&n>2)
+      return "Kau lagi, malam-malam begini. Duduk. Kelihatannya ada yang belum selesai di kepalamu.";
+    if(n===1) return "Kembali juga. Kursi yang itu — sudah kuanggap kursimu.";
+    return SMALL[ph][n%SMALL[ph].length]; };
+  const GOSIP=[
+    "(Ia mengelap cangkir, mencondongkan badan.) Kemarin malam ada tamu. Jas licin, jam tangan berat, memesan yang paling mahal. Lalu bercerita seperti orang mengaku dosa. Kutulis diam-diam.",
+    "(Ia melirik ke jendela.) Orang-orang di jalan membicarakan tamu berjas itu lagi. Katanya semua pintu terbuka untuknya — tapi tak satu pun rumah. Ceritanya masih di laciku.",
+    "(Ia menuang kopi tanpa ditanya.) Kota ini penuh cerita yang belum selesai. Yang paling berat justru dari orang yang paling ringan tertawanya. Tamu berjas itu, misalnya."];
 
   S.warung.onTalk = ()=>{
     const per = api.persona.get();
@@ -190,22 +206,24 @@ const wire = (api)=>{
         {say:()=>"Selesai. Pulanglah, "+draft.nama+" — keluar, ikuti jalan ke selatan sampai papan terakhir. Rumahmu menunggu. ✦"}]);
     } else {
       const n=(+localStorage.nf_talks||0); localStorage.nf_talks=n+1;
-      const pool=SMALL[api.phase()];
       api.runScript([
-        {say:pool[n%pool.length]},
-        {say:"Mau apa hari ini, "+(per.nama||'Tuan Pencetak')+"?",
+        {say:opener(per,n)},
+        {say:GOSIP[n%GOSIP.length]},
+        {say:"Jadi — bagaimana, "+(per.nama||'kau')+"?",
           input:true,placeholder:"…atau ketik apa saja",onfree:hear,
           choices:[
-          {label:"Ngobrol",then:()=>api.runScript([
-            {say:"Jalan Kenangan mulai ramai, ya? Rumah-rumah ini pinjaman — nanti kita bangun milik kita sendiri."},
-            {say:"Kalau ceritamu sudah siap dituturkan — duduklah. Aku yang menulis, kau yang punya. ✦"}])},
-          {label:"Kisah: Oligarki — Bab 1",then:startOligarki},
-          {label:"Kisah: Zakheus",locked:true,
-            lockedMsg:"Sedang ditulis — dengan restu keluarga, tanpa terburu-buru. ✦"},
-          {label:"Curhat (cetak kisahmu)",then:()=>{api.closeDlg();api.runScript([
-            {say:"Duduk. Ceritakan — aku mendengarkan.",input:true,placeholder:"ketik ceritamu…",
-              oninput:hearStore},
-            {say:"…kucatat, kata demi kata. Mesin cetak besarnya masih menunggu kopi — tapi ceritamu aman di laciku. ☕"}])}}]}]);
+          {label:"Tamu berjas itu… ceritakan",then:()=>api.runScript([
+            {say:"Menceritakan saja tidak cukup untuk yang satu ini."},
+            {say:"Duduk yang nyaman. Kuseduhkan sesuatu — dan kau akan menjalaninya DARI DALAM. Dari kursinya. ☕",
+              action:startOligarki}])},
+          {label:"Cerita dari timur itu?",locked:true,
+            lockedMsg:"…yang itu belum boleh kubuka. Sedang ditulis pelan-pelan, dengan restu keluarganya. Yang seperti itu tidak boleh terburu-buru. ✦"},
+          {label:"Aku yang mau cerita, Nona",then:()=>{api.closeDlg();api.runScript([
+            {say:"(Ia menutup buku tulisnya, menatapmu.) Nah. Dari tadi kelihatan. Ceritakan.",
+              input:true,placeholder:"ketik ceritamu…",oninput:hearStore},
+            {say:"…kucatat, kata demi kata. Mesin cetak besarnya masih menunggu kopi — tapi ceritamu aman di laciku. ☕"}])}},
+          {label:"Cuma mampir, Nona",then:()=>api.runScript([
+            {say:"Mampir itu juga cerita — cuma pendek. (Ia mendorong sepiring kecil pisang goreng.) Bawa. Jangan bilang siapa-siapa."}])}]}]);
     }
   };
 };

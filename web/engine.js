@@ -290,11 +290,15 @@ function generateHome(p){
   const links=(p.links||[]).slice(0,4);
   const sc={ name:'RUMAH '+(p.nama||'').toUpperCase(), ground:'interior', W:144,H:224,
     wallH:52, spawn:[72,190], path:[0,0],
-    colliders:[[0,0,144,74],[0,0,5,224],[139,0,5,224],[14,150,26,10]],
+    colliders:[[0,0,144,74],[0,0,5,224],[139,0,5,224],
+      [62,162,16,8],[110,150,12,8],[126,64,10,6]],
     placements:[
       {component:'window-l',x:10,y:12},{component:'lampu-gantung',x:64,y:0},
+      {component:'tanaman-gantung',x:34,y:2},
       {component:'poster',x:104,y:14,interact:{type:'text',title:'Poster',body:(p.quote||'Ceritamu tetap milikmu. — Nona Aksara')}},
       {component:'kasur',x:12,y:52},{component:'tanaman',x:126,y:60},
+      {component:'karpet',x:48,y:138},
+      {component:'meja-bundar',x:62,y:162},{component:'cangkir',x:66,y:158},
       {component:'musik',x:110,y:150,interact:{type:'text',title:'Pemutar Musik',body:'V1: tautkan lagu favoritmu di sini. (Segera)'}},
       {component:'frame',x:52,y:16,interact:{type:'text',title:'Bingkai Foto',body:'Foto-fotomu akan dipajang di sini. (Unggah — segera)'}}],
     npcs:[], fx:[],
