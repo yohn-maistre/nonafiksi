@@ -13,18 +13,22 @@ SHEETS = {
     'v4': 'char-villager4-walk.png', 'woman': 'char-woman-walk.png',
     'old': 'char-oldwoman-sheet.png', 'cat': 'char-cat-sheet.png',
     'floor': 'TilesetInteriorFloor.png', 'intel': 'InteriorElements.png',
+    'dog': 'char-dog-sheet.png', 'chicken': 'char-chicken-sheet.png',
 }
 
 def b64(path):
     return base64.b64encode(open(path, 'rb').read()).decode()
 
+def utf8(path):  # explicit: Windows defaults to cp1252 and chokes on the ✦
+    return open(path, encoding='utf-8').read()
+
 def main():
-    html = open(W('index.html')).read()
-    engine = open(W('engine.js')).read()
-    vendor = open(W('vendor', 'qrcodegen.js')).read()
-    game = open(W('game.js')).read()
-    catalog = json.load(open(W('catalog.json')))
-    scenes = json.load(open(W('aksara', 'scenes.json')))
+    html = utf8(W('index.html'))
+    engine = utf8(W('engine.js'))
+    vendor = utf8(W('vendor', 'qrcodegen.js'))
+    game = utf8(W('game.js'))
+    catalog = json.loads(utf8(W('catalog.json')))
+    scenes = json.loads(utf8(W('aksara', 'scenes.json')))
     assets = {k: 'data:image/png;base64,' + b64(W('assets', f))
               for k, f in SHEETS.items()}
     data = (f"const NF_ASSETS={json.dumps(assets)};"
@@ -34,14 +38,14 @@ def main():
         f'<script>{engine}</script>\n<script>{vendor}</script>\n'
         f'<script>{data}</script>\n<script>{game}</script>')
     fdir = W('fonts') if os.path.exists(W('fonts', 'ps2p.b64')) else SCRATCH
-    html = html.replace('__PS2P__', open(os.path.join(fdir, 'ps2p.b64')).read().strip())
-    html = html.replace('__VT323__', open(os.path.join(fdir, 'vt323.b64')).read().strip())
+    html = html.replace('__PS2P__', utf8(os.path.join(fdir, 'ps2p.b64')).strip())
+    html = html.replace('__VT323__', utf8(os.path.join(fdir, 'vt323.b64')).strip())
     leftover = re.sub(r'base64,[A-Za-z0-9+/=]+', '', html)
     assert '__' not in leftover.replace('__proto__', ''), 'placeholder left: ' + \
         ','.join(set(re.findall(r'__[A-Z0-9]+__', leftover)))
     os.makedirs(os.path.join(ROOT, 'dist'), exist_ok=True)
     out = os.path.join(ROOT, 'dist', 'nonafiksi.html')
-    open(out, 'w').write(html)
+    open(out, 'w', encoding='utf-8').write(html)
     print('OK', out, len(html), 'bytes')
 
 if __name__ == '__main__':

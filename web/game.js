@@ -9,9 +9,10 @@ const wire = (api)=>{
   const slug = s=>(s||'').toLowerCase().replace(/[^a-z0-9]+/g,'-')
     .replace(/^-+|-+$/g,'').slice(0,24)||'tamu';
 
-  // API base: set post-deploy (localStorage nf_api or the hardcoded worker URL).
-  // Empty = offline mode — every feature degrades to its deterministic layer.
-  const NF_API = localStorage.nf_api||'';
+  // API base: localStorage nf_api overrides (a URL, or 'off' to force offline
+  // in dev); default is the live worker. Offline still degrades cleanly.
+  const NF_API = localStorage.nf_api==='off' ? ''
+    : (localStorage.nf_api || 'https://nonafiksi-api.giyaibo.workers.dev');
   const post = (path,body)=>NF_API
     ? fetch(NF_API+path,{method:'POST',headers:{'content-type':'application/json'},
         body:JSON.stringify(body)})
@@ -70,11 +71,59 @@ const wire = (api)=>{
     setTimeout(()=>URL.revokeObjectURL(a.href),5000); }); };
 
   // ---- rumah ----
+  const saveRumah = (p)=>{ let plan=null;
+    try{ plan=JSON.parse(localStorage.nf_plan||'null'); }catch(e){}
+    return post('/api/rumah',{handle:p.handle,persona:p,
+      manifest:plan?{plan}:{}}); };
+
+  // ubah rumah — the home IS the linktree; editing = re-pressing the manifest
+  const ubahRumah = ()=>{ const p=api.persona.get(); if(!p)return; p.links=p.links||[];
+    const commit=()=>{ api.closeDlg(); api.persona.set(p); buildRumah(p);
+      placeHomeOnStreet(); saveRumah(p).catch(()=>{});
+      api.runScript([{say:"(Catatan Nona terselip di pintu:) “Sudah kuatur ulang, sesuai katamu. Lihatlah.” ✦",
+        action:()=>api.goto('rumah',72,190)}]); };
+    const linkMenu=()=>{ const ch=p.links.map((l,i)=>({label:'✎ '+(l.label||l.url).slice(0,16),
+        then:()=>api.runScript([{say:'“'+(l.label||'?')+'” — '+l.url,choices:[
+          {label:"GANTI",then:()=>api.runScript([
+            {say:"Nama barunya?",input:true,placeholder:l.label||"nama…",oninput:v=>l.label=v},
+            {say:"Alamat tautannya?",input:true,placeholder:l.url,
+              oninput:v=>l.url=v.startsWith('http')?v:'https://'+v},
+            {say:"Dicatat, rak diganti.",action:commit}])},
+          {label:"HAPUS",then:()=>{p.links.splice(i,1);
+            api.runScript([{say:"Kucoret dari daftar. Raknya kuambil kembali.",action:commit}]);}},
+          {label:"◂ BATAL",then:linkMenu}]}])}));
+      if(p.links.length<4)ch.push({label:"+ TAMBAH TAUTAN",then:()=>{const nl={};
+        api.runScript([
+          {say:"Nama tautannya? (mis. Portofolio, IG)",input:true,placeholder:"nama…",
+            oninput:v=>nl.label=v},
+          {say:"Alamatnya?",input:true,placeholder:"https://…",
+            oninput:v=>{nl.url=v.startsWith('http')?v:'https://'+v;p.links.push(nl);}},
+          {say:"Rak baru terpasang.",action:commit}]);}});
+      ch.push({label:"◂ KEMBALI",then:ubahRumah});
+      api.runScript([{say:"Rak tautan yang mana?",choices:ch}]); };
+    api.runScript([{say:"(Buku catatan Nona terbuka di meja — halamanmu.) Apa yang kita ubah?",choices:[
+      {label:"TAUTAN — rak-rakmu",then:linkMenu},
+      {label:"SUASANA RUMAH",then:()=>api.runScript([{say:"Rumah seperti apa dirimu sekarang?",choices:[
+        {label:"HANGAT — selimut & kopi",then:()=>{p.vibe='hangat';commit();}},
+        {label:"RAPI — semua pada tempatnya",then:()=>{p.vibe='rapi';commit();}},
+        {label:"RAMAI — tamu & tanaman",then:()=>{p.vibe='ramai';commit();}}]}])},
+      {label:"KUTIPAN DINDING",then:()=>api.runScript([
+        {say:"Kalimat untuk dinding rumahmu?",input:true,placeholder:p.quote||"kutipan…",
+          oninput:v=>p.quote=v},
+        {say:"Kupasang di postermu.",action:commit}])},
+      {label:"NAMA PANGGILAN",then:()=>api.runScript([
+        {say:"Dipanggil siapa sekarang? (@"+p.handle+" tetap — itu alamat rumahmu)",
+          input:true,placeholder:p.nama,oninput:v=>p.nama=v},
+        {say:"Dicatat.",action:commit}])},
+      {label:"◂ SUDAH PAS",then:()=>api.closeDlg()}]}]); };
+
   const doorMenu = ()=>api.runScript([{say:"Mau ke mana?",choices:[
-    {label:"Jalan Kenangan",then:()=>{api.closeDlg();api.goto('street',72,110);}},
+    {label:"Jalan Kenangan",then:()=>{api.closeDlg();api.goto('street',72,618);}},
+    {label:"UBAH RUMAH ✦",then:ubahRumah},
     {label:"Kartu Profil ✦ bagikan",then:()=>{api.closeDlg();shareCard(api.persona.get());}},
     {label:"Dunia kisah lain",locked:true,lockedMsg:"Peta dunia menyusul. ✦"}]}]);
   const buildRumah = (p)=>{ S.rumah=api.generateHome(p); S.rumah.onMenu=doorMenu;
+    try{ const pl=JSON.parse(localStorage.nf_plan||'null'); if(pl)applyPlan(pl,true); }catch(e){}
     if(!localStorage.nf_card){ S.rumah.onEnterOnce=true;
       S.rumah.onEnter=()=>{ localStorage.nf_card=1; api.runScript([
         {say:"(Secarik catatan tertempel di dinding — tulisan Nona:) “Rumah pertamamu. Rak-raknya menunggu kisah.”"},
@@ -83,21 +132,34 @@ const wire = (api)=>{
           {label:"Nanti saja",then:()=>api.closeDlg()}]}]); }; } };
 
   // merge an LLM decor plan into the deterministic base home (validated twice:
-  // Worker gates components/bounds; here we re-check against the live catalog)
-  const applyPlan=(plan)=>{ const sc=S.rumah; if(!sc||!plan)return;
+  // Worker gates components/bounds; here we re-check against the live catalog).
+  // Fresh plans persist to nf_plan so the decor survives reloads; buildRumah
+  // re-applies the stored one after every regeneration.
+  const applyPlan=(plan,fromStore)=>{ const sc=S.rumah; if(!sc||!plan)return;
     (plan.placements||[]).forEach(pl=>{ const c=NF_CATALOG[pl.component]; if(!c)return;
       sc.placements.push({component:pl.component,x:pl.x,y:pl.y});
       if(!c.flat)sc.colliders.push([pl.x,pl.y+(c.h||12)-6,c.w||14,6]); });
     if(plan.quote){ const po=sc.placements.find(p=>p.component==='poster');
-      if(po&&po.interact)po.interact.body=plan.quote+' — Nona Aksara'; } };
+      if(po&&po.interact)po.interact.body=plan.quote+' — Nona Aksara'; }
+    if(!fromStore)try{ localStorage.nf_plan=JSON.stringify(plan); }catch(e){} };
 
   const pulang = S.street.exits.find(e=>e.id==='pulang');
   const refreshPulang = ()=>{ if(api.persona.get()) delete pulang.locked;
     else pulang.locked='Rumahmu belum dibangun. Bicaralah dengan Nona di warung. ✦'; };
+  // the south-end house is always there (a street has houses); the sign says
+  // whose it is — or that the kavling waits.
+  const placeHomeOnStreet = ()=>{ const per=api.persona.get();
+    const sign=S.street.placements.find(p=>p.component==='papan'&&p.y>500);
+    if(sign) sign.interact = per
+      ? {title:'RUMAH '+(per.nama||'').toUpperCase().slice(0,14),
+         body:'@'+per.handle+' — pintumu sendiri, di ujung Jalan Kenangan.'}
+      : {title:'KAVLING KOSONG',
+         body:'Rumah ini menunggu pemiliknya. Bicaralah dengan Nona di warung. ✦'}; };
   const p0 = api.persona.get();
   if(p0&&!p0.handle){ p0.handle=slug(p0.nama); api.persona.set(p0); } // v05 saves
   if(p0) buildRumah(p0);
   refreshPulang();
+  placeHomeOnStreet();
 
   // ---- curhat drawer: typed stories persist locally until the press wakes ----
   // (when the Worker is live, hear() also posts to /api/bicara — Wave F)
@@ -198,12 +260,16 @@ const wire = (api)=>{
           {label:"HANGAT — selimut & kopi",then:()=>draft.vibe='hangat'},
           {label:"RAPI — semua pada tempatnya",then:()=>draft.vibe='rapi'},
           {label:"RAMAI — tamu & tanaman",then:()=>draft.vibe='ramai'}]},
-        {say:"Cukup. Malam ini kubangun rumahmu di ujung jalan — kecil, hangat, penuh rak untuk kisahmu.",
-          action:()=>{draft.handle=slug(draft.nama);api.persona.set(draft);buildRumah(draft);refreshPulang();
-            post('/api/bangun',{persona:draft}).then(r=>r.json())
-              .then(r=>applyPlan(r.plan)).catch(()=>{});
-            post('/api/rumah',{handle:draft.handle,persona:draft,manifest:{}}).catch(()=>{});}},
-        {say:()=>"Selesai. Pulanglah, "+draft.nama+" — keluar, ikuti jalan ke selatan sampai papan terakhir. Rumahmu menunggu. ✦"}]);
+        {say:"Cukup. (Ia menutup buku catatannya dan berdiri.) Dengar itu? Mesin cetaknya sudah menyala — rumahmu sedang DICETAK, halaman demi halaman. ✦",
+          action:()=>{draft.handle=slug(draft.nama);api.persona.set(draft);buildRumah(draft);refreshPulang();placeHomeOnStreet();
+            // save FIRST (bangun's daily cap lives on the rumah row), then decorate
+            post('/api/rumah',{handle:draft.handle,persona:draft,manifest:{}})
+              .then(()=>post('/api/bangun',{handle:draft.handle,persona:draft}))
+              .then(r=>r.json()).then(r=>{ if(r.plan){ applyPlan(r.plan);
+                post('/api/rumah',{handle:draft.handle,persona:draft,
+                  manifest:{plan:r.plan}}).catch(()=>{}); } }).catch(()=>{});}},
+        {say:()=>"Selesai, "+draft.nama+". Tintanya masih hangat. (Ia meniup halaman terakhir, lalu tersenyum.) Kuantar kau lewat jalan pintas penulis — lurus MENEMBUS halaman. Rumahmu di ujung jalan, selatan, kalau mau pulang jalan kaki nanti. ✦",
+          action:()=>api.goto('rumah',72,190)}]);
     } else {
       const n=(+localStorage.nf_talks||0); localStorage.nf_talks=n+1;
       api.runScript([

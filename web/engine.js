@@ -70,7 +70,45 @@ const MAPS = {
    'x'+'c'.repeat(32)+'x','xcc'+'C'.repeat(24)+'c'.repeat(6)+'x','x'+'c'.repeat(32)+'x',
    'xcc'+'C'.repeat(20)+'c'.repeat(10)+'x','x'+'c'.repeat(32)+'x',
    'xcc'+'C'.repeat(24)+'c'.repeat(6)+'x','x'+'c'.repeat(32)+'x',
-   'xcc'+'C'.repeat(16)+'c'.repeat(14)+'x','x'+'c'.repeat(32)+'x','x'.repeat(34)]
+   'xcc'+'C'.repeat(16)+'c'.repeat(14)+'x','x'+'c'.repeat(32)+'x','x'.repeat(34)],
+ // Nona the kedai-keeper polishing a glass — 2 frames, same 18 rows as nonaApron
+ nonaBar0: ["......kkkkk.g.....",".....kkkkkkkg.....",".....kkkkkkkk.....","....kkkkkkkkkk....",
+  "....kksssssskk....","...kksssssssskk...","...kkseesseeskk...","...kksssssssskk...",
+  "....ksssmmsssk....",".....ssssssss.....",".......ssss..scc..",".....iiccccii.cc..",
+  "....iiccccccii....","...iiccCccCccii...","...iicccccccii....","..iiicccggccciii..",
+  "..iiiccccccccIii..","..iiiccccccccIii.."],
+ nonaBar1: ["......kkkkk.g.....",".....kkkkkkkg.....",".....kkkkkkkk.....","....kkkkkkkkkk....",
+  "....kksssssskk....","...kksssssssskk...","...kkseesseeskk...","...kksssssssskk...",
+  "....ksssmmsssk....",".....ssssssss.....",".......ssss..sCC..",".....iiccccii.Cc..",
+  "....iiccccccii....","...iiccCccCccii...","...iicccccccii....","..iiicccggccciii..",
+  "..iiiccccccccIii..","..iiiccccccccIii.."],
+ gelas: ['c..c','cC.c','cC.c','cccc'],
+ gerobak: ['.gcgcgcgcgcgcgcgcgcg.',
+  'gcgcgcgcgcgcgcgcgcgcg',
+  '.x.................x.',
+  '.x.................x.',
+  '.xWWWWWWWWWWWWWWWWWx.',
+  '.xWcccccccccccccccWx.',
+  '.xWcttc.ggc.mmc.ccWx.',
+  '.xWWWWWWWWWWWWWWWWWx.',
+  '.xwwwwwwwwwwwwwwwwwx.',
+  '.xwwwwwwwwwwwwwwwwwx.',
+  '..x....x.....x....x..',
+  '..xx..xx.....xx..xx..',
+  '...xxxx.......xxxx...'],
+ jemuran: ['x............................x',
+  'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
+  'x..tt....cc.....ii....mm.....x',
+  'x..tt....cc.....ii....mm.....x',
+  'x..tt....cc.....ii....mm.....x',
+  'x...t.....c.....i......m.....x',
+  'x............................x',
+  'x............................x'],
+ // fallback dog (2-frame trot) — superseded if the Ninja animal sheets land
+ anjing0: ['.kkk........','kkkkk.......','kk.kssssssss','.kkssssssss.','..ssssssss..',
+  '..s..ss..s..','..s..ss..s..'],
+ anjing1: ['.kkk........','kkkkk.......','kk.kssssssss','.kkssssssss.','..ssssssss..',
+  '..s.s..s.s..','.s...s....s.']
 };
 function spr(map, pal) { pal = pal || PAL;
   const w = Math.max(...map.map(r=>r.length)), h = map.length,
@@ -184,6 +222,22 @@ const FX = {
        X.fillRect(pl.x+((i*19)%pl.w)+9*Math.sin(p*6.3+i)|0,pl.y+((i*67)%pl.h)-6*Math.sin(p*12)|0,1,1); } } },
  bunting(pl,t){ for(let x=pl.x;x<pl.x+pl.w;x+=12){ rect('#191009',x,pl.y,12,1);
    rect([C.terakota,C.kunyit,C.tinta][((x/12)|0)%3],x+3,pl.y+1,5,4); } },
+ birds(pl,t){ if(phase()==='malam')return; // a small V crosses the band every ~9s
+   const T=9000,k=t/T|0,p=(t%T)/T; if(p>.55)return;
+   const y0=pl.y+((k*37)%Math.max(1,(pl.h||100)-12)),ltr=k%2,
+     bx=pl.x+(ltr?p/.55*(pl.w+30)-15:pl.w+15-p/.55*(pl.w+30));
+   X.fillStyle='rgba(20,19,17,.75)';
+   for(let i=0;i<4;i++){ const wx=bx-i*7*(ltr?1:-1),wy=y0+(i%2)*4+i*2,
+     fl=((t/150|0)+i)%2?-1:1;
+     X.fillRect(wx|0,wy|0,2,1); X.fillRect((wx-2)|0,(wy+fl)|0,2,1);
+     X.fillRect((wx+2)|0,(wy+fl)|0,2,1); } },
+ butterfly(pl,t){ const ph=phase(); if(ph!=='pagi'&&ph!=='siang')return;
+   for(let i=0;i<(pl.n||2);i++){ const p=t/5200+i*.5,
+     x=pl.x+pl.w/2+Math.sin(p*2.1+i)*pl.w/2, y=pl.y+pl.h/2+Math.sin(p*3.3+i*2)*pl.h/2,
+     fl=((t/120|0)+i)%2;
+     X.fillStyle=i%2?C.kunyit:C.kertas;
+     X.fillRect(x|0,y|0,1,1);
+     if(fl){X.fillRect((x-1)|0,y|0,1,1);X.fillRect((x+1)|0,y|0,1,1);} } },
  window(pl,t){ const ph=phase(), w=pl.w||40, h=pl.h||30;
    rect(C.gelap,pl.x,pl.y,w,h);
    const sky={pagi:'#e8b7a0',siang:'#bcd4e6',sore:'#e88a50',malam:C.langit}[ph];
@@ -200,8 +254,50 @@ const DECOS = {
    rect(C.kayu,d.x+4,d.y+10,d.w-8,12); rect('rgba(0,0,0,.2)',d.x+4,d.y+15,d.w-8,1); },
  shelfJars(d,t){ rect(C.kayu3,d.x,d.y+10,d.w,3);
    [C.tinta,C.terakota,C.kunyit].forEach((c,i)=>rect(c,d.x+4+i*11,d.y+(i%2?2:0),7,10-(i%2?2:0))); },
- doormat(d,t){ rect('#191009',d.x,d.y,d.w,9); rect(C.terakota,d.x+2,d.y+2,d.w-4,5); }
+ doormat(d,t){ rect('#191009',d.x,d.y,d.w,9); rect(C.terakota,d.x+2,d.y+2,d.w-4,5); },
+ rakBotol(d,t){ // kedai-malam back shelf: sirup/kopi/jamu bottles (paper labels,
+   // varied heights) — warung reading, never liquor. {x,y,w,rows}
+   const rows=d.rows||2,rh=13;
+   for(let r=0;r<rows;r++){ const by=d.y+r*rh;
+     rect(C.kayu3,d.x,by+10,d.w,3); rect('rgba(0,0,0,.25)',d.x,by+13,d.w,1);
+     for(let i=0,bx=d.x+3;bx<d.x+d.w-8;i++,bx+=9){
+       const c=[C.terakota,C.kunyit,C.tinta2,C.daun][(i+r*2)%4],bh=8+((i*7+r*3)%3);
+       rect(c,bx,by+10-bh,5,bh);
+       rect(c,bx+1,by+8-bh,3,2); rect('#191009',bx+1,by+7-bh,3,1);
+       rect(C.kertas,bx+1,by+10-(bh>9?5:4),3,3); } }
+   if(isDark())glow(d.x+d.w/2,d.y+rows*rh/2,d.w/2.2,.05); }
 };
+
+// ---------- NPC brains — all data-driven from scene npc entries ----------
+// {y0,y1} vertical ping-pong · {x0,x1} horizontal patrol · {wander:[x,y,w,h]}
+// amble-and-pause · {chase:'id',ox,oy} follow a leader (kid-chasing-dog pairs)
+// · {static:'down'} stand · {anim:[maps],animMs} 2-frame custom (bartender)
+function stepNpc(n,sc,t){
+  n._mov=false;
+  if(n.static){ n.dir=n.static; return; }
+  const sp=(n.speed||22)/60;
+  if(n.y1!=null){ n.y=(n.y??n.y0)+(n.dirDown?1:-1)*sp;
+    if(n.y>n.y1)n.dirDown=false; if(n.y<n.y0)n.dirDown=true;
+    n.dir=n.dirDown?'down':'up'; n._mov=true; return; }
+  if(n.x1!=null){ n.x=(n.x??n.x0)+(n.dirRight?1:-1)*sp;
+    if(n.x>n.x1)n.dirRight=false; if(n.x<n.x0)n.dirRight=true;
+    n.dir=n.dirRight?'right':'left'; n._mov=true; return; }
+  let tx=null,ty=null;
+  if(n.chase){ const L=(sc.npcs||[]).find(m=>m.id===n.chase);
+    if(L){ tx=L.x+(n.ox||0); ty=L.y+(n.oy||0); } }
+  else if(n.wander){ const r=n.wander;
+    if(n._wait>0){ n._wait-=1/60; return; }
+    if(n._tx==null||(Math.abs(n._tx-n.x)<2&&Math.abs(n._ty-n.y)<2)){
+      n._tx=r[0]+rnd((n.x*3)|0,(t/900)|0)*r[2]; n._ty=r[1]+rnd((t/900)|0,(n.y*3)|0)*r[3];
+      n._wait=1+2*rnd((n.x+t/1000)|0,(n.y*7)|0); return; }
+    tx=n._tx; ty=n._ty; }
+  if(tx==null)return;
+  const dx=tx-n.x,dy=ty-n.y,d=Math.hypot(dx,dy);
+  if(d<(n.chase?5:2))return;
+  n.x+=dx/d*sp; n.y+=dy/d*sp;
+  n.dir=Math.abs(dx)>Math.abs(dy)?(dx>0?'right':'left'):(dy>0?'down':'up');
+  n._mov=true;
+}
 
 function drawScene(sc,t){
   (GROUNDS[sc.ground]||GROUNDS.street)(sc,t);
@@ -215,12 +311,19 @@ function drawScene(sc,t){
     if(c.flat)draw(); else ents.push({y:pl.y+(c.h||(A.custom[c.custom]||{}).height||16),draw});
   });
   (sc.npcs||[]).forEach(n=>{
-    if(!n.static&&n.y1){ n.y=(n.y??n.y0)+(n.dirDown?1:-1)*22/60;
-      if(n.y>n.y1)n.dirDown=false; if(n.y<n.y0)n.dirDown=true; }
-    const h=n.custom?(A.custom[n.custom]||{}).height||18:0;
-    ents.push({y:n.custom?n.y+h:n.y,draw:()=>n.custom
-      ?X.drawImage(A.custom[n.custom],n.x,n.y)
-      :drawChar(n.k,n.x,n.y,n.static||(n.dirDown?'down':'up'),n.static?0:(t/180|0)%4)});
+    stepNpc(n,sc,t);
+    const cKey=n.anim?n.anim[(t/(n.animMs||600)|0)%n.anim.length]:n.custom;
+    const h=cKey?(A.custom[cKey]||{}).height||18:0;
+    ents.push({y:cKey?n.y+h:n.y,draw:()=>{
+      if(cKey)return X.drawImage(A.custom[cKey],n.x,n.y);
+      if(n.strip){ // 2-frame side-view sheets (Ninja animals): flip-x for left
+        if(n.dir==='left'||n.dir==='right')n._face=n.dir;
+        const fw=n.fw||16,fh=n.fh||16,f=n._mov?(t/160|0)%(n.frames||2):0;
+        X.save(); X.translate(n.x|0,(n.y-fh)|0);
+        if(n._face==='left'){X.scale(-1,1);}
+        X.drawImage(img(n.strip),f*fw,0,fw,fh,-(fw/2|0),0,fw,fh);
+        X.restore(); return; }
+      drawChar(n.k,n.x,n.y,n.dir||'down',n._mov?(t/180|0)%(n.frames||4):0);}});
   });
   (sc.fx||[]).forEach(f=>FX[f.type]&&FX[f.type](f,t));
   ents.filter(e=>e.y<=st.y).sort((a,b)=>a.y-b.y).forEach(e=>e.draw());

@@ -220,7 +220,7 @@
   "interact": {
    "type": "text",
    "title": "Menu Warung",
-   "body": "Kopi Tubruk 1☕ · Es Kopi Susu 1☕ · Pisang Goreng 1☕ · Cerita — gratis, selalu."
+   "body": "Kopi Tubruk 1☕ · Es Kopi Susu 1☕ · Es Sirup 1☕ · Wedang Jahe 1☕ · Pisang Goreng 1☕ · Cerita — gratis, selalu."
   }
  },
  "cerobong": {
@@ -407,5 +407,46 @@
    "interior",
    "warung"
   ]
+ },
+ "gelas": {
+  "custom": "gelas",
+  "w": 4,
+  "h": 4,
+  "tags": [
+   "interior",
+   "warung"
+  ],
+  "interact": {
+   "type": "text",
+   "title": "Gelas Kedai",
+   "body": "Digosok sampai bening oleh Nona. Es sirup merah, wedang jahe, kopi tubruk — semua pernah singgah di sini."
+  }
+ },
+ "gerobak": {
+  "custom": "gerobak",
+  "w": 21,
+  "h": 13,
+  "tags": [
+   "kampung",
+   "kota"
+  ],
+  "interact": {
+   "type": "text",
+   "title": "Gerobak",
+   "body": "Gerobak kaki lima. Rodanya hafal jalan ini lebih dari siapa pun."
+  }
+ },
+ "jemuran": {
+  "custom": "jemuran",
+  "w": 30,
+  "h": 8,
+  "tags": [
+   "kampung"
+  ],
+  "interact": {
+   "type": "text",
+   "title": "Jemuran",
+   "body": "Cucian tetangga menari pelan. Hari yang baik untuk mengeringkan apa saja — termasuk kenangan."
+  }
  }
 }

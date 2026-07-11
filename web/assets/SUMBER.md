@@ -8,6 +8,8 @@ House doctrine: no asset without a source row. All fetched 2026-07-06.
 | kenney-city-sheet.png | Kenney — Roguelike Modern City pack, mirrored at https://opengameart.org/content/roguelike-modern-city-pack | CC0 |
 | oga-farming-crops.zip | josehzz — https://opengameart.org/content/farming-crops-16x16 (rice, cassava, coffee incl.) | CC0 |
 | oga-beach-tiles.png | ChikenwingJJA — https://opengameart.org/content/beach-tileset | CC0 |
+| char-dog-sheet.png (Actor/Animal/DogOrange/SpriteSheet.png; 36x16, 2-frame side-view trot, 18px-wide frames, faces right — flip-x for left; fetched 2026-07-11) | Ninja Adventure Asset Pack by Pixel-Boy & AAA — https://pixel-boy.itch.io/ninja-adventure-asset-pack | CC0 |
+| char-chicken-sheet.png (Actor/Animal/Chicken/SpriteSheetBrown.png; 32x16, 2-frame side-view walk, 16x16 cells, faces right — flip-x for left; fetched 2026-07-11) | Ninja Adventure Asset Pack by Pixel-Boy & AAA — https://pixel-boy.itch.io/ninja-adventure-asset-pack | CC0 |
 
 Rules: only CC0/CC-BY assets may live in this repo (CC-BY gets a credit row
 here AND in the game colophon). Packs with no-redistribution clauses

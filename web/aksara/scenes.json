@@ -117,15 +117,35 @@
     "component": "kucing",
     "x": 26,
     "y": 598
+   },
+   {
+    "component": "rumah-a",
+    "x": 42,
+    "y": 570
+   },
+   {
+    "component": "gerobak",
+    "x": 100,
+    "y": 296,
+    "interact": {
+     "title": "GEROBAK SATE",
+     "body": "Arangnya masih hangat. Secarik kertas: \"SEBENTAR — SALAT.\" Di kota ini, gerobak pun punya kisah menunggu."
+    }
+   },
+   {
+    "component": "jemuran",
+    "x": 2,
+    "y": 372
    }
   ],
   "npcs": [
    {
     "k": "v1",
     "x": 72,
-    "y0": 180,
-    "y1": 260,
-    "y": 200
+    "y": 238,
+    "x0": 44,
+    "x1": 98,
+    "speed": 18
    },
    {
     "k": "woman",
@@ -139,12 +159,73 @@
     "x": 90,
     "y0": 420,
     "y1": 500,
-    "y": 470
+    "y": 470,
+    "speed": 20
+   },
+   {
+    "k": "woman",
+    "x": 60,
+    "y": 470,
+    "wander": [
+     46,
+     448,
+     52,
+     70
+    ],
+    "speed": 14
+   },
+   {
+    "id": "dog1",
+    "strip": "dog",
+    "fw": 18,
+    "fh": 16,
+    "x": 60,
+    "y": 280,
+    "wander": [
+     44,
+     252,
+     56,
+     52
+    ],
+    "speed": 36
+   },
+   {
+    "k": "boy",
+    "x": 80,
+    "y": 300,
+    "chase": "dog1",
+    "ox": -12,
+    "oy": 2,
+    "speed": 33
+   },
+   {
+    "strip": "chicken",
+    "x": 18,
+    "y": 320,
+    "wander": [
+     8,
+     312,
+     30,
+     34
+    ],
+    "speed": 12
+   },
+   {
+    "strip": "chicken",
+    "x": 30,
+    "y": 336,
+    "wander": [
+     8,
+     312,
+     30,
+     34
+    ],
+    "speed": 10
    },
    {
     "k": "old",
-    "x": 100,
-    "y": 588,
+    "x": 120,
+    "y": 560,
     "static": "down"
    }
   ],
@@ -161,6 +242,29 @@
     "y": 110,
     "w": 104,
     "h": 500
+   },
+   {
+    "type": "birds",
+    "x": 0,
+    "y": 100,
+    "w": 144,
+    "h": 150
+   },
+   {
+    "type": "butterfly",
+    "x": 20,
+    "y": 172,
+    "w": 26,
+    "h": 22,
+    "n": 2
+   },
+   {
+    "type": "butterfly",
+    "x": 96,
+    "y": 508,
+    "w": 26,
+    "h": 22,
+    "n": 2
    }
   ],
   "colliders": [
@@ -283,6 +387,30 @@
     604,
     12,
     8
+   ],
+   [
+    42,
+    592,
+    14,
+    24
+   ],
+   [
+    90,
+    592,
+    16,
+    24
+   ],
+   [
+    100,
+    306,
+    21,
+    6
+   ],
+   [
+    2,
+    374,
+    30,
+    4
    ]
   ],
   "exits": [
@@ -331,6 +459,13 @@
     "x": 58,
     "y": 240,
     "w": 28
+   },
+   {
+    "type": "rakBotol",
+    "x": 52,
+    "y": 38,
+    "w": 80,
+    "rows": 2
    }
   ],
   "placements": [
@@ -483,11 +618,35 @@
     "component": "tanaman",
     "x": 132,
     "y": 204
+   },
+   {
+    "component": "kursi-bar",
+    "x": 66,
+    "y": 121
+   },
+   {
+    "component": "gelas",
+    "x": 44,
+    "y": 91
+   },
+   {
+    "component": "gelas",
+    "x": 74,
+    "y": 91
+   },
+   {
+    "component": "gelas",
+    "x": 110,
+    "y": 182
    }
   ],
   "npcs": [
    {
-    "custom": "nonaApron",
+    "anim": [
+     "nonaBar0",
+     "nonaBar1"
+    ],
+    "animMs": 700,
     "x": 63,
     "y": 74,
     "static": "down"
@@ -509,6 +668,24 @@
     "x": 120,
     "y": 178,
     "static": "left"
+   },
+   {
+    "k": "boy",
+    "x": 70,
+    "y": 132,
+    "static": "up"
+   },
+   {
+    "k": "v4",
+    "x": 88,
+    "y": 196,
+    "static": "right"
+   },
+   {
+    "k": "woman",
+    "x": 92,
+    "y": 240,
+    "static": "right"
    }
   ],
   "colliders": [
@@ -613,6 +790,12 @@
     204,
     10,
     6
+   ],
+   [
+    66,
+    121,
+    8,
+    4
    ]
   ],
   "fx": [

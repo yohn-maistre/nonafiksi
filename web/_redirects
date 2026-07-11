@@ -1,0 +1,2 @@
+# /@handle profile pages live on the worker (Pages can't cross-host proxy; 302 is right for QR scans)
+/@* https://nonafiksi-api.giyaibo.workers.dev/@:splat 302
