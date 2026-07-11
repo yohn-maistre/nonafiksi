@@ -3,6 +3,38 @@
 Written for a reader with amnesia. Each entry: what happened, what's true
 now, what's next.
 
+## 2026-07-11 (night) — v0.8.1: gang facets LIVE, /@ page = the card, BONGKAR RUMAH
+
+Yose playtested v0.8 live (his QR scanned, /@yose renders, kunci flow held) and
+asked for: gang facets now, /@ page styled like the persona card with a way to
+walk in, and delete/reset (he speedran the interview into a one-letter link).
+All shipped + curl-drilled green:
+
+- **Gang facets**: rumah.facets column, whitelist self-labels only (penulis/
+  musisi/kreator/dev/pedagang/perantau — profession/place/interest; religion/
+  ethnicity/age NEVER, SARA rule). /api/jalan?gang=X facet filter, gang=acak
+  random sample, bogus → default. Client: PETA GANG signpost+zone left of the
+  warung door (interact placed >30px from zone so the popup can't shadow the
+  menu), gang picker multi-toggle in ubah rumah ("GANG ✦ komunitasku"),
+  street name swaps to the gang name. Streets are officially VIEWS.
+- **/@ page is the card now**: tinta band, avatar plate (INITIAL for now — real
+  pixel avatar/photos land with the R2 wave, Yose wants them customizable in
+  the house), links, og meta, and **MASUK RUMAHNYA ✦ →
+  nonafiksi.pages.dev/?kunjungi=handle** — the boot param walks a guest
+  straight into that home (skips title). The linktree finally opens its door.
+- **BONGKAR RUMAH**: /api/rumah/hapus (kunci-gated; deletes rumah + tamu
+  rows; verified wrong-key 403 / real-key gone), double-confirm flow in ubah
+  rumah, wipes nf_* localStorage and reloads to title. Fixes the "careless
+  playthrough" problem: reset and re-interview.
+- dchoices got max-height+scroll (menus grew to 8 items).
+- @kirana seeded with facets penulis+perantau so Gang Penulis has a lit house.
+
+**Known state**: Yose's own @yose exists with a junk one-letter link — he can
+fix via UBAH RUMAH → TAUTAN → GANTI, or BONGKAR and redo. NIM_API_KEY still
+pending. Next session queue (designed): R2 photo/polaroid wall + avatar on
+card+page, Spotify corner, halaman notes, titip salam, Pak RT/warta,
+embedding garis-minat batch.
+
 ## 2026-07-11 (later) — v0.8 SOCIAL CORE: kunci auth, buku tamu, Jalan v0, kampung-algorithm design
 
 Same-day follow-up to v0.7. Yose's brainstorm ("neighbors change daily? or
