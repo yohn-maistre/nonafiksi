@@ -142,6 +142,23 @@ const wire = (api)=>{
           choices:[
             {label:"YA, NONA",then:()=>{p.terdaftar=p.terdaftar?0:1;commit();}},
             {label:"BATAL",then:ubahRumah}]}])},
+      {label:"GANG ✦ komunitasku",then:()=>{ p.facets=p.facets||[];
+        const fmenu=()=>api.runScript([{say:"Gang mana yang terasa seperti rumahmu? (boleh lebih dari satu — rumahmu ikut tampil di lorong itu)",choices:[
+          ...GANGS.map(g=>({label:(p.facets.includes(g[0])?'✓ ':'· ')+g[1],
+            then:()=>{const i=p.facets.indexOf(g[0]);
+              i<0?p.facets.push(g[0]):p.facets.splice(i,1); fmenu();}})),
+          {label:'SIMPAN ✦',then:commit},
+          {label:'◂ BATAL',then:ubahRumah}]}],'PETA GANG'); fmenu(); }},
+      {label:"BONGKAR RUMAH ⚠",then:()=>api.runScript([
+        {say:"Membongkar rumah = MENGHAPUS SEMUANYA dari percetakan: @"+p.handle+", tautan, buku tamu, kuncinya. Tidak bisa dibatalkan. Kau yakin?",choices:[
+          {label:"BONGKAR. AKU YAKIN.",then:()=>api.runScript([
+            {say:"Baik. (Ia menutup arsipmu pelan-pelan.) Kuhapus dari percetakan. Kalau suatu hari ingin membangun lagi — datang saja, kursimu tetap ada. ✦",
+              action:()=>{ post('/api/rumah/hapus',{handle:p.handle,token:TOKEN.get()})
+                  .catch(()=>{});
+                ['nf_persona','nf_token','nf_plan','nf_card','nf_talks','nf_curhat']
+                  .forEach(k=>localStorage.removeItem(k));
+                setTimeout(()=>location.reload(),700); }}])},
+          {label:"BATAL — rumahku sayang",then:ubahRumah}]}])},
       {label:"◂ SUDAH PAS",then:()=>api.closeDlg()}]}]); };
 
   // buku tamu — visitors' notes, read with the kunci
@@ -158,13 +175,17 @@ const wire = (api)=>{
       .catch(()=>api.popup({title:'BUKU TAMU',
         body:'Percetakan tak terjangkau — coba lagi saat daring.'})); };
 
-  // ---- jalan v0: neighbor plots — the street's houses are real people's homes.
-  // Kavling (signup) order for now; the garis-minat ranking swaps in server-side
-  // later without touching any of this.
+  // ---- jalan: neighbor plots — the street's houses are real people's homes.
+  // Streets are VIEWS over the rumah table: gang = a facet filter, acak =
+  // serendipity, default = kavling order (garis-minat embedding later).
   const PLOTS=[ {hx:-10,hy:118,door:[4,164,26,12]},
     {hx:98,hy:168,door:[106,214,26,12]},
     {hx:96,hy:348,door:[104,394,26,12]},
     {hx:-14,hy:400,door:[0,446,26,12]} ];
+  const GANGS=[['penulis','GANG PENULIS'],['musisi','GANG MUSISI'],
+    ['kreator','GANG KREATOR'],['dev','GANG DEV'],
+    ['pedagang','GANG PEDAGANG'],['perantau','GANG PERANTAU']];
+  let gangKini='';
   const kunjungi=(t,door)=>{ api.closeDlg();
     get('/api/rumah?handle='+encodeURIComponent(t.handle)).then(r=>r.json()).then(r=>{
       if(!r.persona)return api.popup({title:'@'+t.handle,body:'Rumahnya belum tersambung.'});
@@ -183,8 +204,12 @@ const wire = (api)=>{
       S['rumah-tamu']=sc;
       api.goto('rumah-tamu',72,190); })
     .catch(()=>api.popup({title:'@'+t.handle,body:'Jalanan sepi — percetakan tak terjangkau.'})); };
-  const jalanRefresh = ()=>{ const per=api.persona.get();
-    get('/api/jalan?me='+encodeURIComponent(per&&per.handle||''))
+  const jalanRefresh = (gang)=>{ const per=api.persona.get();
+    gangKini=gang||'';
+    const gg=GANGS.find(g=>g[0]===gangKini);
+    S.street.name = gg?gg[1] : gangKini==='acak'?'GANG ACAK':'JALAN KENANGAN';
+    get('/api/jalan?me='+encodeURIComponent(per&&per.handle||'')+
+        (gangKini?'&gang='+gangKini:''))
       .then(r=>r.json()).then(r=>{
         const tt=(r.tetangga||[]).slice(0,PLOTS.length);
         S.street.exits=S.street.exits.filter(e=>!(e.id&&e.id.startsWith('ketuk:')));
@@ -195,11 +220,22 @@ const wire = (api)=>{
           if(t.aktif)S.street.fx.push({type:'glowFlicker',tetangga:1,
             x:pl.hx+32,y:pl.hy+34,r:18,a:.16}); }); })
       .catch(()=>{}); };
-  S.street.onMenu=(ex)=>{ if(!ex||!ex.tg)return; const t=ex.tg;
+  const gangMenu = ()=>api.runScript([{say:"Peta gang tertempel di tiang. Jalan-jalan ini sebenarnya satu jalan — yang berganti adalah TETANGGANYA. Mau menyusuri yang mana?",choices:[
+      ...GANGS.map(g=>({label:g[1],then:()=>{api.closeDlg();jalanRefresh(g[0]);
+        api.popup({title:g[1],body:'Rumah-rumah di lorong ini milik para '+g[0]+
+          ' yang mendaftarkan diri. Ketuk pintunya — yang lampunya menyala sedang ada di rumah. ✦'});}})),
+      {label:'GANG ACAK ✦ siapa saja',then:()=>{api.closeDlg();jalanRefresh('acak');
+        api.popup({title:'GANG ACAK',body:'Lorong tanpa peta. Tetangga hari ini: kejutan. ✦'});}},
+      {label:'◂ JALAN KENANGAN (pulang)',then:()=>{api.closeDlg();jalanRefresh('');}}]}],
+    'PETA GANG');
+  S.street.onMenu=(ex)=>{ if(!ex)return;
+    if(ex.id==='petagang')return gangMenu();
+    if(!ex.tg)return; const t=ex.tg;
     api.runScript([{say:"RUMAH "+(t.nama||t.handle).toUpperCase().slice(0,14)+" — @"+t.handle+
       (t.aktif?". Lampunya menyala.":". Sedang hening.")+" Ketuk pintunya?",choices:[
       {label:"MASUK ✦",then:()=>kunjungi(t,ex.door)},
       {label:"Lewat saja",then:()=>api.closeDlg()}]}],'JALAN KENANGAN'); };
+  S.street.exits.push({x:8,y:88,w:28,h:14,label:'✦ PETA GANG',menu:true,id:'petagang'});
 
   const doorMenu = ()=>api.runScript([{say:"Mau ke mana?",choices:[
     {label:"Jalan Kenangan",then:()=>{api.closeDlg();api.goto('street',72,618);}},
@@ -250,6 +286,13 @@ const wire = (api)=>{
   refreshPulang();
   placeHomeOnStreet();
   jalanRefresh(); // neighbor plots (offline → street stays decorative)
+
+  // deep link: /?kunjungi=handle (from the /@ card page) → walk straight
+  // into that home as a guest, skipping the title screen
+  const kv=new URLSearchParams(location.search).get('kunjungi');
+  if(kv&&/^[a-z0-9-]{1,24}$/.test(kv))
+    setTimeout(()=>{ api.begin('street',72,110);
+      kunjungi({handle:kv,nama:kv},PLOTS[0].door); },350);
 
   // ---- curhat drawer: typed stories persist locally until the press wakes ----
   // (when the Worker is live, hear() also posts to /api/bicara — Wave F)

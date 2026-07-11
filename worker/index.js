@@ -8,6 +8,12 @@ import CATALOG from '../web/catalog.json';
 
 const INTENTS = new Set(['none', 'serve_kopi', 'start_interview', 'recap']);
 const HANDLE = /^[a-z0-9-]{1,24}$/;
+// gang facets — opt-in SELF-labels only (profession/place/interest; never
+// religion/ethnicity/age — SARA rule). Streets are views over the rumah table.
+const GANGS = ['penulis', 'musisi', 'kreator', 'dev', 'pedagang', 'perantau'];
+const facetsCol = (p) => { const f = ((p || {}).facets || [])
+  .filter(x => GANGS.includes(x)).slice(0, 6);
+  return f.length ? ',' + f.join(',') + ',' : ''; };
 
 const sha256hex = async (s) => {
   const d = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s));
@@ -55,18 +61,19 @@ export default {
       const terdaftar = b.terdaftar ? 1 : 0;
       const row = await env.DB.prepare(
         'SELECT secret_hash FROM rumah WHERE handle=?').bind(b.handle).first();
+      const facets = facetsCol(b.persona);
       if (!row) {
         const token = crypto.randomUUID();
-        await env.DB.prepare(`INSERT INTO rumah(handle,persona,manifest,secret_hash,terdaftar,updated_at)
-          VALUES(?,?,?,?,?,datetime('now'))`)
-          .bind(b.handle, persona, manifest, await sha256hex(token), terdaftar).run();
+        await env.DB.prepare(`INSERT INTO rumah(handle,persona,manifest,secret_hash,terdaftar,facets,updated_at)
+          VALUES(?,?,?,?,?,?,datetime('now'))`)
+          .bind(b.handle, persona, manifest, await sha256hex(token), terdaftar, facets).run();
         return json({ ok: true, url: '/@' + b.handle, token, baru: true });
       }
       if (!row.secret_hash) {
         const token = crypto.randomUUID();
-        await env.DB.prepare(`UPDATE rumah SET persona=?,manifest=?,secret_hash=?,terdaftar=?,
+        await env.DB.prepare(`UPDATE rumah SET persona=?,manifest=?,secret_hash=?,terdaftar=?,facets=?,
           updated_at=datetime('now') WHERE handle=?`)
-          .bind(persona, manifest, await sha256hex(token), terdaftar, b.handle).run();
+          .bind(persona, manifest, await sha256hex(token), terdaftar, facets, b.handle).run();
         return json({ ok: true, url: '/@' + b.handle, token, baru: true });
       }
       if (!b.token) return json({ error: 'sudah dipakai' }, 409);
@@ -74,10 +81,24 @@ export default {
       // string-compare timing; good enough for a game kunci.
       if (await sha256hex(String(b.token)) !== row.secret_hash)
         return json({ error: 'kunci salah' }, 403);
-      await env.DB.prepare(`UPDATE rumah SET persona=?,manifest=?,terdaftar=?,
+      await env.DB.prepare(`UPDATE rumah SET persona=?,manifest=?,terdaftar=?,facets=?,
         updated_at=datetime('now') WHERE handle=?`)
-        .bind(persona, manifest, terdaftar, b.handle).run();
+        .bind(persona, manifest, terdaftar, facets, b.handle).run();
       return json({ ok: true, url: '/@' + b.handle });
+    }
+
+    // bongkar: token-gated full delete (rumah + its buku tamu)
+    if (url.pathname === '/api/rumah/hapus' && req.method === 'POST') {
+      const b = await req.json().catch(() => ({}));
+      const row = await env.DB.prepare(
+        'SELECT secret_hash FROM rumah WHERE handle=?').bind(String(b.handle || '')).first();
+      if (!row) return json({ error: 'belum ada' }, 404);
+      if (!row.secret_hash || !b.token ||
+          await sha256hex(String(b.token)) !== row.secret_hash)
+        return json({ error: 'kunci salah' }, 403);
+      await env.DB.prepare('DELETE FROM tamu WHERE handle=?').bind(b.handle).run();
+      await env.DB.prepare('DELETE FROM rumah WHERE handle=?').bind(b.handle).run();
+      return json({ ok: true, dibongkar: true });
     }
 
     // recovery: handle + kunci → full persona/manifest (new phone, wiped browser)
@@ -125,12 +146,21 @@ export default {
       return json({ ok: true, catatan: rs.results || [] });
     }
 
-    // jalan v0: opted-in neighbors in kavling (signup) order. The embedding-
-    // ranked "garis minat" replaces the ORDER BY later; the contract stays.
+    // jalan: opted-in neighbors. Default = kavling (signup) order; ?gang=X
+    // filters by facet (streets are views); ?gang=acak = serendipity sample.
+    // The embedding "garis minat" replaces the default ORDER BY later.
     if (url.pathname === '/api/jalan' && req.method === 'GET') {
       const me = url.searchParams.get('me') || '';
-      const rs = await env.DB.prepare(`SELECT handle,persona,updated_at FROM rumah
-        WHERE terdaftar=1 AND handle!=? ORDER BY rowid ASC LIMIT 8`).bind(me).all();
+      const gang = url.searchParams.get('gang') || '';
+      let q = `SELECT handle,persona,updated_at FROM rumah
+        WHERE terdaftar=1 AND handle!=? ORDER BY rowid ASC LIMIT 8`;
+      const binds = [me];
+      if (gang === 'acak') q = q.replace('ORDER BY rowid ASC', 'ORDER BY RANDOM()');
+      else if (GANGS.includes(gang)) {
+        q = `SELECT handle,persona,updated_at FROM rumah
+          WHERE terdaftar=1 AND handle!=? AND facets LIKE ? ORDER BY rowid ASC LIMIT 8`;
+        binds.push('%,' + gang + ',%'); }
+      const rs = await env.DB.prepare(q).bind(...binds).all();
       const now = Date.now();
       return json({ tetangga: (rs.results || []).map(r => { let p = {};
         try { p = JSON.parse(r.persona); } catch (e) {}
@@ -148,19 +178,22 @@ export default {
         : json({ error: 'belum ada' }, 404);
     }
 
-    // /@handle — human-readable rumah page; honest placeholder, never a 404 lie
+    // /@handle — the persona card as a page; honest placeholder, never a 404 lie
     if (url.pathname.startsWith('/@')) {
       const h = url.pathname.slice(2).toLowerCase();
-      if (!HANDLE.test(h)) return html(page('ALAMAT?', 'Alamat tidak dikenal.'), 404);
+      if (!HANDLE.test(h)) return html(page('ALAMAT?', '?', 'Alamat tidak dikenal.'), 404);
       const row = await env.DB.prepare(
         'SELECT persona FROM rumah WHERE handle=?').bind(h).first().catch(() => null);
-      if (!row) return html(page('@' + esc(h),
-        'Rumah ini belum tersambung ke percetakan. Pemiliknya mungkin masih menyeduh kopi. ☕'));
+      if (!row) return html(page('@' + esc(h), '☕',
+        'Rumah ini belum tersambung ke percetakan. Pemiliknya mungkin masih menyeduh kopi.'));
       const p = JSON.parse(row.persona);
+      const nama = p.nama || h;
       const links = (p.links || []).filter(l => /^https?:\/\//i.test(l.url || '')).map(l =>
         `<a href="${esc(l.url)}" rel="noopener">${esc(l.label || l.url)} ▸</a>`).join('');
-      return html(page('RUMAH ' + esc((p.nama || h).toUpperCase()),
-        '@' + esc(h) + ' — dicetak hangat di NonaFiksi.', links));
+      const masuk = `<a class="go" href="https://nonafiksi.pages.dev/?kunjungi=${esc(h)}">` +
+        `MASUK RUMAHNYA ✦</a>`;
+      return html(page(esc(nama.toUpperCase().slice(0, 16)),
+        esc(nama[0] || '?').toUpperCase(), '@' + esc(h), links + masuk));
     }
 
     // bangun: Aksara designs the home via LLM; deterministic validator gates it.
@@ -279,15 +312,26 @@ const html = (b, s = 200) => new Response(b,
   { status: s, headers: { 'content-type': 'text/html;charset=utf-8' } });
 const esc = s => String(s).replace(/[&<>"']/g,
   c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-const page = (title, sub, links) => `<!doctype html><meta charset="utf-8">
+// the /@ page IS the card: tinta band, avatar plate (initial for now — real
+// pixel avatars/photos come with the R2 wave), links, and a door into the game.
+const page = (title, ava, sub, links) => `<!doctype html><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1"><title>${title} — NonaFiksi</title>
+<meta property="og:title" content="${title} — NonaFiksi">
+<meta property="og:description" content="${sub || 'cerita yang dicetak hangat'}">
 <style>body{background:#1a120d;color:#f2e8d5;font-family:monospace;display:flex;
-align-items:center;justify-content:center;min-height:100vh;margin:0}
-.c{max-width:420px;padding:24px;border:3px solid #3a2a1c;box-shadow:6px 6px 0 #000;
-background:#2a1d14;text-align:center}h1{color:#e3a62f;font-size:18px;letter-spacing:1px}
-p{color:#e4d5b8;line-height:1.6}a{display:block;background:#f2e8d5;color:#1a120d;
-padding:10px;margin:8px 0;text-decoration:none;border:2px solid #000;font-weight:bold}
-.f{color:#c4553b;font-size:11px;margin-top:18px}</style>
-<div class="c"><h1>${title}</h1><p>${sub}</p>${links || ''}
+align-items:center;justify-content:center;min-height:100vh;margin:0;padding:14px;box-sizing:border-box}
+.c{width:340px;max-width:94vw;border:4px solid #3a2a1c;box-shadow:8px 8px 0 #000;
+background:#f2e8d5;color:#1a120d;text-align:center;padding-bottom:16px}
+.band{background:#303b7a;height:92px;position:relative;margin-bottom:52px}
+.ava{position:absolute;left:50%;bottom:-40px;transform:translateX(-50%);width:80px;height:80px;
+background:#f2e8d5;border:4px solid #1a120d;font-size:44px;line-height:76px;font-weight:bold;color:#303b7a}
+h1{font-size:19px;letter-spacing:1px;margin:6px 0 2px}
+.h{color:#303b7a;font-weight:bold;margin:0 0 14px}
+a{display:block;background:#fffdf6;color:#1a120d;padding:11px;margin:8px 14px;
+text-decoration:none;border:2px solid #1a120d;box-shadow:3px 3px 0 rgba(0,0,0,.35);font-weight:bold}
+a.go{background:#e3a62f}
+.f{color:#c4553b;font-size:10px;margin-top:14px;letter-spacing:1px}</style>
+<div class="c"><div class="band"><div class="ava">${ava || '✦'}</div></div>
+<h1>${title}</h1><p class="h">${sub || ''}</p>${links || ''}
 <a href="https://nonafiksi.pages.dev">MAIN NONAFIKSI ▸</a>
-<p class="f">NONAFIKSI ✦ cerita yang dicetak hangat</p></div>`;
+<p class="f">NONAFIKSI ✦ CERITA YANG DICETAK HANGAT</p></div>`;

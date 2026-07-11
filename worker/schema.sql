@@ -19,7 +19,8 @@ CREATE TABLE IF NOT EXISTS rumah(                -- the /@handle promise
   secret_hash TEXT,                              -- sha256 of the claim token (NULL = legacy unclaimed)
   bangun_day TEXT,                               -- /api/bangun daily window (UTC date)
   bangun_count INTEGER NOT NULL DEFAULT 0,       -- calls used in that window
-  terdaftar INTEGER NOT NULL DEFAULT 0);         -- opt-in: visible as a neighbor on Jalan (doctrine: unlisted by default)
+  terdaftar INTEGER NOT NULL DEFAULT 0,          -- opt-in: visible as a neighbor on Jalan (doctrine: unlisted by default)
+  facets TEXT NOT NULL DEFAULT '');              -- ',penulis,dev,' — opt-in self-labels; gang streets filter on this
 CREATE TABLE IF NOT EXISTS tamu(                 -- buku tamu: visitors' notes, owner-read (kunci)
   id INTEGER PRIMARY KEY AUTOINCREMENT, handle TEXT NOT NULL,
   nama TEXT, pesan TEXT NOT NULL, at TEXT);

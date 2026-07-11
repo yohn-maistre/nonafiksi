@@ -136,6 +136,15 @@
     "component": "jemuran",
     "x": 2,
     "y": 372
+   },
+   {
+    "component": "papan",
+    "x": 0,
+    "y": 58,
+    "interact": {
+     "title": "PETA GANG",
+     "body": "Satu jalan, banyak lorong: penulis, musisi, kreator, dev, pedagang, perantau. Berdirilah di sini dan pilih ✦ PETA GANG."
+    }
    }
   ],
   "npcs": [
