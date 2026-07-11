@@ -8,6 +8,16 @@ import CATALOG from '../web/catalog.json';
 
 const INTENTS = new Set(['none', 'serve_kopi', 'start_interview', 'recap']);
 const HANDLE = /^[a-z0-9-]{1,24}$/;
+
+// per-isolate IP brake (best-effort: resets on isolate eviction, which is fine —
+// it exists to stop dumb loops, not determined attackers; D1 daily cap does the rest)
+const IPS = new Map();
+const ipOk = (ip) => {
+  const now = Date.now(); const e = IPS.get(ip) || { n: 0, at: now };
+  if (now - e.at > 60000) { e.n = 0; e.at = now; }
+  e.n++; if (IPS.size > 2000) IPS.clear(); IPS.set(ip, e);
+  return e.n <= 10;
+};
 const CORS = { 'access-control-allow-origin': '*',
   'access-control-allow-methods': 'GET,POST,OPTIONS',
   'access-control-allow-headers': 'content-type' };
@@ -60,7 +70,7 @@ export default {
       if (!row) return html(page('@' + esc(h),
         'Rumah ini belum tersambung ke percetakan. Pemiliknya mungkin masih menyeduh kopi. ☕'));
       const p = JSON.parse(row.persona);
-      const links = (p.links || []).map(l =>
+      const links = (p.links || []).filter(l => /^https?:\/\//i.test(l.url || '')).map(l =>
         `<a href="${esc(l.url)}" rel="noopener">${esc(l.label || l.url)} ▸</a>`).join('');
       return html(page('RUMAH ' + esc((p.nama || h).toUpperCase()),
         '@' + esc(h) + ' — dicetak hangat di NonaFiksi.', links));
@@ -68,9 +78,27 @@ export default {
 
     // bangun: Aksara designs the home via LLM; deterministic validator gates it.
     // No key / any failure → {fallback:true} and the client builds deterministically.
+    // Cost guards (NIM quota is real money-shaped): per-IP soft brake, 4KB body cap,
+    // and a per-handle daily cap of 5 charged on ATTEMPT (fail-closed). The handle's
+    // rumah row must already exist — the client always saves the home first.
     if (url.pathname === '/api/bangun' && req.method === 'POST') {
       if (!env.NIM_API_KEY) return json({ fallback: true, reason: 'kunci belum ada' });
-      const b = await req.json().catch(() => ({}));
+      if (!ipOk(req.headers.get('cf-connecting-ip') || '?'))
+        return json({ error: 'pelan-pelan ☕' }, 429);
+      const raw = await req.text();
+      if (raw.length > 4096) return json({ error: 'terlalu besar' }, 413);
+      let b; try { b = JSON.parse(raw); } catch { b = {}; }
+      const h = String(b.handle || '');
+      if (!HANDLE.test(h)) return json({ fallback: true, reason: 'handle dulu' });
+      const row = await env.DB.prepare(
+        'SELECT bangun_day,bangun_count FROM rumah WHERE handle=?').bind(h).first();
+      if (!row) return json({ fallback: true, reason: 'rumah belum tercatat' });
+      const today = new Date().toISOString().slice(0, 10); // UTC day; WIB skews the
+      const used = row.bangun_day === today ? row.bangun_count : 0; // reset hour, fine v0.7
+      if (used >= 5)
+        return json({ error: 'mesin cetak perlu istirahat — besok lagi ☕' }, 429);
+      await env.DB.prepare('UPDATE rumah SET bangun_day=?, bangun_count=? WHERE handle=?')
+        .bind(today, used + 1, h).run();
       const plan = await bangunRumah(b.persona || {}, env).catch(() => null);
       return plan ? json({ plan }) : json({ fallback: true, reason: 'mesin cetak tersedak' });
     }

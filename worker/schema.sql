@@ -15,4 +15,7 @@ CREATE TABLE IF NOT EXISTS memory_facts(         -- distilled, batch-written
   source TEXT, created_at TEXT);
 CREATE TABLE IF NOT EXISTS rumah(                -- the /@handle promise
   handle TEXT PRIMARY KEY, persona TEXT NOT NULL,
-  manifest TEXT NOT NULL, updated_at TEXT);
+  manifest TEXT NOT NULL, updated_at TEXT,
+  secret_hash TEXT,                              -- claim-token auth (next wave; NULL = unclaimed)
+  bangun_day TEXT,                               -- /api/bangun daily window (UTC date)
+  bangun_count INTEGER NOT NULL DEFAULT 0);      -- calls used in that window
