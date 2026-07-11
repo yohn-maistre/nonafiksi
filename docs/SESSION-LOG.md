@@ -3,6 +3,64 @@
 Written for a reader with amnesia. Each entry: what happened, what's true
 now, what's next.
 
+## 2026-07-11 (later) — v0.8 SOCIAL CORE: kunci auth, buku tamu, Jalan v0, kampung-algorithm design
+
+Same-day follow-up to v0.7. Yose's brainstorm ("neighbors change daily? or
+fixed with overlap?") landed on the **kampung algorithm** design, logged here
+as north star: 1D "garis minat" (embed personas, project to a line),
+**fractional addresses** frozen at signup (new users insert BETWEEN nearest
+neighbors — LexoRank-style, nobody ever moves, neighborhoods overlap by
+construction), RT segments of 8-10 houses, rotating **pendatang** guest slots
+for freshness, **Gang Tembusan** wormhole-alleys to far-but-kindred RTs.
+LLM never ranks — embeddings rank, Nona narrates intros (aksara-cli doctrine).
+v1 = nightly Actions batch; v0 (SHIPPED tonight) = kavling/signup order.
+
+Shipped + verified live by curl drill (all 10 checks green):
+
+- **Kunci auth (the hijack hole is CLOSED)**: first save of a handle mints a
+  uuid kunci (sha256 → rumah.secret_hash, returned exactly once); updates
+  need it (409 taken / 403 wrong); legacy NULL rows claimed by next writer
+  (tes-v07 claimed, then tokenless rewrite correctly 409'd). /api/rumah/cek =
+  recovery. /api/bangun token-gated. Client: kunci popup (clipboard copy,
+  door-menu re-view), "Rumahku sudah ada — aku bawa kunci" recovery at Nona,
+  409 auto-suffix.
+- **Buku tamu**: POST /api/tamu open-write (IP brake, 280 chars, 200/owner
+  cap, owner must exist), /api/tamu/baca kunci-gated. Client: door menu
+  BUKU TAMU (owner reads), visitors write from a neighbor's door.
+- **Jalan v0**: rumah.terdaftar opt-in (RT toggle in ubah rumah, unlisted by
+  default per doctrine), GET /api/jalan → 4 neighbor PLOTS on street houses
+  (rumah-a/merah/b/c), KETUK exits → knock dialog → **visit their real home**
+  (generateHome from their persona + decor plan, read-only, buku-tamu write,
+  exit back at their door). Lampu menyala glow for aktif (<48h) neighbors.
+- **Polish**: arrow-key/Enter dialog selection (.chc.sel kunyit outline),
+  kasur collider + street door gap tightened (clipping), jemuran redrawn
+  (was reading as FIRE at night, Yose's favorite bug ever).
+- Seeded demo neighbor **@kirana** (terdaftar) so first players find a lit
+  house; drill rows unregistered.
+
+**Parked designs (ready, next sessions)**: polaroid-wall gallery zoom +
+R2 uploads (client-resize webp, 12/user, needs R2 binding); Spotify corner
+(oEmbed, free, no key — verified 2026-07-11); halaman notes (D1); titip
+salam (D1 relay via Nona); Pak RT NPC + papan pengumuman (detak-detik warta
+surface); embedding batch. Instagram: NO free API exists (Basic Display dead
+12/2024, replacement needs business accounts) — uploads are the honest path,
+decided.
+
+**Gang-facet design (Yose, same night)**: streets are VIEWS over the rumah
+table, not places — one canonical home, but a house can appear on many
+themed streets. Gang = entrance to a facet-street: Gang Penulis / Musisi /
+Dev (profession), Gang Pesisir etc. (place), Gang Acak (daily random
+sample). Facets are OPT-IN SELF-LABELS chosen in ubah rumah, never inferred
+(SARA rule: profession/place/interest facets yes; religion/ethnicity never
+as browsing categories; age skipped). Implementation is just
+/api/jalan?gang=X WHERE facet — cheaper than embeddings and ships the
+explore use-case sooner; the embedding garis-minat stays the default
+Jalan Kenangan mix. Peta gang lives in the warung.
+
+**Needs-from-Yose**: NIM_API_KEY still pending; phone playtest v0.8 (kunci
+beat, knock on @kirana's door, buku tamu round-trip, arrow keys on desktop);
+ledger unchanged.
+
 ## 2026-07-11 — 🟢 v0.7 "Malam Kedai": BACKEND LIVE, world alive, kedai bar, ubah rumah
 
 **THE DEPLOY IS FIXED.** Yose repaired the CF token; full CI pipeline green
