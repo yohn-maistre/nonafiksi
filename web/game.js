@@ -17,6 +17,16 @@ const wire = (api)=>{
     ? fetch(NF_API+path,{method:'POST',headers:{'content-type':'application/json'},
         body:JSON.stringify(body)})
     : Promise.reject(new Error('offline'));
+  const get = (path)=>NF_API ? fetch(NF_API+path) : Promise.reject(new Error('offline'));
+  // kunci rumah: the claim token minted by the worker on first save. Losing it
+  // means losing remote edit rights (by design — no email/OAuth yet).
+  const TOKEN = { get:()=>localStorage.nf_token||'', set:t=>{localStorage.nf_token=t;} };
+  const showKunci = (t,baru)=>{ try{navigator.clipboard.writeText(t);}catch(e){}
+    api.popup({title:'KUNCI RUMAHMU ✦',
+      body:(baru?'Rumahmu resmi tercatat di percetakan! ':'')+
+      'Ini kunci rumahmu — satu-satunya cara masuk kembali dari ponsel lain atau '+
+      'setelah data browser terhapus. Sudah kusalin ke clipboard, simpan baik-baik: '+
+      t+' — lihat lagi kapan saja lewat pintu rumah → KUNCI RUMAH.'}); };
 
   // ---- title screen ----
   api.state.playerSheet = localStorage.nf_char||'boy';
@@ -73,8 +83,18 @@ const wire = (api)=>{
   // ---- rumah ----
   const saveRumah = (p)=>{ let plan=null;
     try{ plan=JSON.parse(localStorage.nf_plan||'null'); }catch(e){}
-    return post('/api/rumah',{handle:p.handle,persona:p,
-      manifest:plan?{plan}:{}}); };
+    return post('/api/rumah',{handle:p.handle,persona:p,manifest:plan?{plan}:{},
+        token:TOKEN.get()||undefined,terdaftar:p.terdaftar?1:0})
+      .then(r=>r.json()).then(r=>{
+        if(r.token){ TOKEN.set(r.token); showKunci(r.token,r.baru); }
+        return r; }); };
+  // handle taken by someone else (409) → suffix and retry, max 3 hops
+  const claimRumah = (p,depth)=>saveRumah(p).then(r=>{
+    if(r&&r.error==='sudah dipakai'&&(depth||0)<3){
+      p.handle=p.handle.replace(/-\d+$/,'').slice(0,21)+'-'+((10+Math.random()*90)|0);
+      api.persona.set(p); placeHomeOnStreet();
+      return claimRumah(p,(depth||0)+1); }
+    return r; });
 
   // ubah rumah — the home IS the linktree; editing = re-pressing the manifest
   const ubahRumah = ()=>{ const p=api.persona.get(); if(!p)return; p.links=p.links||[];
@@ -115,12 +135,80 @@ const wire = (api)=>{
         {say:"Dipanggil siapa sekarang? (@"+p.handle+" tetap — itu alamat rumahmu)",
           input:true,placeholder:p.nama,oninput:v=>p.nama=v},
         {say:"Dicatat.",action:commit}])},
+      {label:p.terdaftar?"RT ✦ cabut dari jalan":"RT ✦ daftarkan rumahku",
+        then:()=>api.runScript([{say:p.terdaftar
+          ?"Kucabut rumahmu dari daftar RT — tetangga tak lagi melihat papan namamu di jalan. Yakin?"
+          :"Kudaftarkan rumahmu ke RT — rumahmu tampil di Jalan Kenangan, tetangga bisa mampir dan menulis di buku tamumu. Kuncimu tetap satu, rumah tetap milikmu. Yakin?",
+          choices:[
+            {label:"YA, NONA",then:()=>{p.terdaftar=p.terdaftar?0:1;commit();}},
+            {label:"BATAL",then:ubahRumah}]}])},
       {label:"◂ SUDAH PAS",then:()=>api.closeDlg()}]}]); };
+
+  // buku tamu — visitors' notes, read with the kunci
+  const bukaBukuTamu = ()=>{ api.closeDlg(); const per=api.persona.get();
+    post('/api/tamu/baca',{handle:per.handle,token:TOKEN.get()})
+      .then(r=>r.json()).then(r=>{
+        if(!r.ok)return api.popup({title:'BUKU TAMU',
+          body:'Arsipnya tidak terbuka ('+(r.error||'entah')+').'});
+        const c=r.catatan||[];
+        api.popup({title:'BUKU TAMU · '+c.length+' catatan',
+          body:c.length?c.slice(0,8).map(x=>'“'+x.pesan+'” — '+(x.nama||'tamu')+', '+
+            String(x.at||'').slice(0,10)).join('  ✦  ')
+          :'Masih kosong. Bagikan kartumu — tamu pertamamu sedang dalam perjalanan. ✦'}); })
+      .catch(()=>api.popup({title:'BUKU TAMU',
+        body:'Percetakan tak terjangkau — coba lagi saat daring.'})); };
+
+  // ---- jalan v0: neighbor plots — the street's houses are real people's homes.
+  // Kavling (signup) order for now; the garis-minat ranking swaps in server-side
+  // later without touching any of this.
+  const PLOTS=[ {hx:-10,hy:118,door:[4,164,26,12]},
+    {hx:98,hy:168,door:[106,214,26,12]},
+    {hx:96,hy:348,door:[104,394,26,12]},
+    {hx:-14,hy:400,door:[0,446,26,12]} ];
+  const kunjungi=(t,door)=>{ api.closeDlg();
+    get('/api/rumah?handle='+encodeURIComponent(t.handle)).then(r=>r.json()).then(r=>{
+      if(!r.persona)return api.popup({title:'@'+t.handle,body:'Rumahnya belum tersambung.'});
+      const sc=api.generateHome(r.persona);
+      sc.name='RUMAH '+(r.persona.nama||t.handle).toUpperCase().slice(0,12)+' ✦ @'+t.handle;
+      if(r.manifest&&r.manifest.plan)applyPlanTo(sc,r.manifest.plan);
+      sc.onMenu=()=>api.runScript([{say:"Pintu rumah @"+t.handle+".",choices:[
+        {label:"KEMBALI KE JALAN",then:()=>{api.closeDlg();
+          api.goto('street',door[0]+13,door[1]+16);}},
+        {label:"TULIS DI BUKU TAMU ✦",then:()=>api.runScript([
+          {say:"Pesanmu untuk "+(r.persona.nama||t.handle)+"?",input:true,
+            placeholder:"pesan singkat…",oninput:v=>{const me=api.persona.get()||{};
+              post('/api/tamu',{handle:t.handle,nama:me.nama||'tamu',
+                pesan:v}).catch(()=>{});}},
+          {say:"Kuselipkan lewat celah pintunya. Ia akan membacanya. ✦"}])}]}],'@'+t.handle);
+      S['rumah-tamu']=sc;
+      api.goto('rumah-tamu',72,190); })
+    .catch(()=>api.popup({title:'@'+t.handle,body:'Jalanan sepi — percetakan tak terjangkau.'})); };
+  const jalanRefresh = ()=>{ const per=api.persona.get();
+    get('/api/jalan?me='+encodeURIComponent(per&&per.handle||''))
+      .then(r=>r.json()).then(r=>{
+        const tt=(r.tetangga||[]).slice(0,PLOTS.length);
+        S.street.exits=S.street.exits.filter(e=>!(e.id&&e.id.startsWith('ketuk:')));
+        S.street.fx=S.street.fx.filter(f=>!f.tetangga);
+        tt.forEach((t,i)=>{ const pl=PLOTS[i];
+          S.street.exits.push({x:pl.door[0],y:pl.door[1],w:pl.door[2],h:pl.door[3],
+            label:'✦ KETUK',menu:true,id:'ketuk:'+t.handle,tg:t,door:pl.door});
+          if(t.aktif)S.street.fx.push({type:'glowFlicker',tetangga:1,
+            x:pl.hx+32,y:pl.hy+34,r:18,a:.16}); }); })
+      .catch(()=>{}); };
+  S.street.onMenu=(ex)=>{ if(!ex||!ex.tg)return; const t=ex.tg;
+    api.runScript([{say:"RUMAH "+(t.nama||t.handle).toUpperCase().slice(0,14)+" — @"+t.handle+
+      (t.aktif?". Lampunya menyala.":". Sedang hening.")+" Ketuk pintunya?",choices:[
+      {label:"MASUK ✦",then:()=>kunjungi(t,ex.door)},
+      {label:"Lewat saja",then:()=>api.closeDlg()}]}],'JALAN KENANGAN'); };
 
   const doorMenu = ()=>api.runScript([{say:"Mau ke mana?",choices:[
     {label:"Jalan Kenangan",then:()=>{api.closeDlg();api.goto('street',72,618);}},
+    {label:"BUKU TAMU ✦",then:bukaBukuTamu},
     {label:"UBAH RUMAH ✦",then:ubahRumah},
     {label:"Kartu Profil ✦ bagikan",then:()=>{api.closeDlg();shareCard(api.persona.get());}},
+    {label:"KUNCI RUMAH",then:()=>{api.closeDlg();
+      TOKEN.get()?showKunci(TOKEN.get(),false)
+        :api.popup({title:'KUNCI RUMAH',body:'Belum ada kunci — rumahmu belum tercatat di percetakan (offline saat wawancara?). Ubah sesuatu di rumah saat daring dan kuncinya akan dibuat.'});}},
     {label:"Dunia kisah lain",locked:true,lockedMsg:"Peta dunia menyusul. ✦"}]}]);
   const buildRumah = (p)=>{ S.rumah=api.generateHome(p); S.rumah.onMenu=doorMenu;
     try{ const pl=JSON.parse(localStorage.nf_plan||'null'); if(pl)applyPlan(pl,true); }catch(e){}
@@ -131,17 +219,18 @@ const wire = (api)=>{
           {label:"KARTU PROFIL ✦ BAGIKAN",then:()=>{api.closeDlg();shareCard(api.persona.get());}},
           {label:"Nanti saja",then:()=>api.closeDlg()}]}]); }; } };
 
-  // merge an LLM decor plan into the deterministic base home (validated twice:
+  // merge an LLM decor plan into a deterministic base home (validated twice:
   // Worker gates components/bounds; here we re-check against the live catalog).
-  // Fresh plans persist to nf_plan so the decor survives reloads; buildRumah
-  // re-applies the stored one after every regeneration.
-  const applyPlan=(plan,fromStore)=>{ const sc=S.rumah; if(!sc||!plan)return;
+  // applyPlanTo works on ANY home scene (ours or a neighbor's we're visiting);
+  // applyPlan is the owner path: it also persists to nf_plan for reloads.
+  const applyPlanTo=(sc,plan)=>{ if(!sc||!plan)return;
     (plan.placements||[]).forEach(pl=>{ const c=NF_CATALOG[pl.component]; if(!c)return;
       sc.placements.push({component:pl.component,x:pl.x,y:pl.y});
       if(!c.flat)sc.colliders.push([pl.x,pl.y+(c.h||12)-6,c.w||14,6]); });
     if(plan.quote){ const po=sc.placements.find(p=>p.component==='poster');
-      if(po&&po.interact)po.interact.body=plan.quote+' — Nona Aksara'; }
-    if(!fromStore)try{ localStorage.nf_plan=JSON.stringify(plan); }catch(e){} };
+      if(po&&po.interact)po.interact.body=plan.quote+' — Nona Aksara'; } };
+  const applyPlan=(plan,fromStore)=>{ applyPlanTo(S.rumah,plan);
+    if(!fromStore&&plan)try{ localStorage.nf_plan=JSON.stringify(plan); }catch(e){} };
 
   const pulang = S.street.exits.find(e=>e.id==='pulang');
   const refreshPulang = ()=>{ if(api.persona.get()) delete pulang.locked;
@@ -160,6 +249,7 @@ const wire = (api)=>{
   if(p0) buildRumah(p0);
   refreshPulang();
   placeHomeOnStreet();
+  jalanRefresh(); // neighbor plots (offline → street stays decorative)
 
   // ---- curhat drawer: typed stories persist locally until the press wakes ----
   // (when the Worker is live, hear() also posts to /api/bicara — Wave F)
@@ -245,12 +335,42 @@ const wire = (api)=>{
     "(Ia melirik ke jendela.) Orang-orang di jalan membicarakan tamu berjas itu lagi. Katanya semua pintu terbuka untuknya — tapi tak satu pun rumah. Ceritanya masih di laciku.",
     "(Ia menuang kopi tanpa ditanya.) Kota ini penuh cerita yang belum selesai. Yang paling berat justru dari orang yang paling ringan tertawanya. Tamu berjas itu, misalnya."];
 
+  // recovery: new phone / wiped browser → handle + kunci → rumah restored
+  const pulihkan = ()=>{ const rec={};
+    api.runScript([
+      {say:"Sebutkan alamat rumahmu — si @handle.",input:true,placeholder:"handle…",
+        oninput:v=>rec.handle=slug(v.replace(/^@/,''))},
+      {say:"Dan kuncinya? (yang kuberikan waktu rumahmu pertama dicetak)",input:true,
+        placeholder:"xxxxxxxx-xxxx-…",oninput:v=>rec.token=v.trim()},
+      {say:"Sebentar, kubuka arsipnya…",action:()=>{
+        post('/api/rumah/cek',{handle:rec.handle,token:rec.token})
+          .then(r=>r.json()).then(r=>{
+            if(!r.ok)return api.popup({title:'TIDAK COCOK',
+              body:'Alamat dan kunci itu tidak berjodoh di arsipku. Periksa lagi hurufnya.'});
+            TOKEN.set(rec.token);
+            if(r.manifest&&r.manifest.plan)try{
+              localStorage.nf_plan=JSON.stringify(r.manifest.plan); }catch(e){}
+            api.persona.set(r.persona); buildRumah(r.persona);
+            refreshPulang(); placeHomeOnStreet();
+            api.runScript([{say:"Ketemu. Selamat datang kembali, "+(r.persona.nama||'kawan')+
+              " — rumahmu masih hangat, persis seperti kau tinggalkan. ✦",
+              action:()=>api.goto('rumah',72,190)}]); })
+          .catch(()=>api.popup({title:'OFFLINE',
+            body:'Percetakan tak terjangkau. Coba lagi saat daring.'}));}}]); };
+
   S.warung.onTalk = ()=>{
     const per = api.persona.get();
     if(!per){
       const draft = {links:[]};
       api.runScript([
-        {say:"Selamat datang di Warung Pusat. Aku Aksara — penjaga percetakan ini. Kopi dulu? Cangkir pertama kutraktir. ✦"},
+        {say:"Selamat datang di Warung Pusat. Aku Aksara — penjaga percetakan ini. Kopi dulu? Cangkir pertama kutraktir. ✦",choices:[
+          {label:"AKU BARU — tuliskan aku, Nona",then:()=>api.runScript(wawancara(draft))},
+          {label:"Rumahku sudah ada — aku bawa kunci",then:pulihkan}]}]);
+      return;
+    }
+    onTalkKembali(per);
+  };
+  const wawancara = (draft)=>[
         {say:"Sebelum kutulis apa pun — siapa namamu?",input:true,placeholder:"namamu…",
           oninput:v=>draft.nama=v},
         {say:()=>"Salam kenal, "+draft.nama+". Tautan yang paling menceritakan dirimu? (portofolio, IG, apa saja)",
@@ -262,15 +382,14 @@ const wire = (api)=>{
           {label:"RAMAI — tamu & tanaman",then:()=>draft.vibe='ramai'}]},
         {say:"Cukup. (Ia menutup buku catatannya dan berdiri.) Dengar itu? Mesin cetaknya sudah menyala — rumahmu sedang DICETAK, halaman demi halaman. ✦",
           action:()=>{draft.handle=slug(draft.nama);api.persona.set(draft);buildRumah(draft);refreshPulang();placeHomeOnStreet();
-            // save FIRST (bangun's daily cap lives on the rumah row), then decorate
-            post('/api/rumah',{handle:draft.handle,persona:draft,manifest:{}})
-              .then(()=>post('/api/bangun',{handle:draft.handle,persona:draft}))
+            // claim FIRST (mints the kunci; bangun needs row + token), then decorate
+            claimRumah(draft)
+              .then(()=>post('/api/bangun',{handle:draft.handle,token:TOKEN.get(),persona:draft}))
               .then(r=>r.json()).then(r=>{ if(r.plan){ applyPlan(r.plan);
-                post('/api/rumah',{handle:draft.handle,persona:draft,
-                  manifest:{plan:r.plan}}).catch(()=>{}); } }).catch(()=>{});}},
+                saveRumah(draft).catch(()=>{}); } }).catch(()=>{});}},
         {say:()=>"Selesai, "+draft.nama+". Tintanya masih hangat. (Ia meniup halaman terakhir, lalu tersenyum.) Kuantar kau lewat jalan pintas penulis — lurus MENEMBUS halaman. Rumahmu di ujung jalan, selatan, kalau mau pulang jalan kaki nanti. ✦",
-          action:()=>api.goto('rumah',72,190)}]);
-    } else {
+          action:()=>api.goto('rumah',72,190)}];
+  const onTalkKembali = (per)=>{
       const n=(+localStorage.nf_talks||0); localStorage.nf_talks=n+1;
       api.runScript([
         {say:opener(per,n)},
@@ -290,7 +409,6 @@ const wire = (api)=>{
             {say:"…kucatat, kata demi kata. Mesin cetak besarnya masih menunggu kopi — tapi ceritamu aman di laciku. ☕"}])}},
           {label:"Cuma mampir, Nona",then:()=>api.runScript([
             {say:"Mampir itu juga cerita — cuma pendek. (Ia mendorong sepiring kecil pisang goreng.) Bawa. Jangan bilang siapa-siapa."}])}]}]);
-    }
   };
 };
 NF.init({sheets:NF_ASSETS,catalog:NF_CATALOG,scenes:NF_SCENES,start:'street',wire});

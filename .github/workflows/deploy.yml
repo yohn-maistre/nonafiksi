@@ -39,6 +39,7 @@ jobs:
           npx wrangler@4 d1 execute nonafiksi --remote --command "ALTER TABLE rumah ADD COLUMN secret_hash TEXT" 2>/dev/null || true
           npx wrangler@4 d1 execute nonafiksi --remote --command "ALTER TABLE rumah ADD COLUMN bangun_day TEXT" 2>/dev/null || true
           npx wrangler@4 d1 execute nonafiksi --remote --command "ALTER TABLE rumah ADD COLUMN bangun_count INTEGER NOT NULL DEFAULT 0" 2>/dev/null || true
+          npx wrangler@4 d1 execute nonafiksi --remote --command "ALTER TABLE rumah ADD COLUMN terdaftar INTEGER NOT NULL DEFAULT 0" 2>/dev/null || true
 
       - name: Deploy Worker (API + NonaAgent DO)
         run: npx wrangler@4 deploy

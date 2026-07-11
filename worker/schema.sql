@@ -16,6 +16,10 @@ CREATE TABLE IF NOT EXISTS memory_facts(         -- distilled, batch-written
 CREATE TABLE IF NOT EXISTS rumah(                -- the /@handle promise
   handle TEXT PRIMARY KEY, persona TEXT NOT NULL,
   manifest TEXT NOT NULL, updated_at TEXT,
-  secret_hash TEXT,                              -- claim-token auth (next wave; NULL = unclaimed)
+  secret_hash TEXT,                              -- sha256 of the claim token (NULL = legacy unclaimed)
   bangun_day TEXT,                               -- /api/bangun daily window (UTC date)
-  bangun_count INTEGER NOT NULL DEFAULT 0);      -- calls used in that window
+  bangun_count INTEGER NOT NULL DEFAULT 0,       -- calls used in that window
+  terdaftar INTEGER NOT NULL DEFAULT 0);         -- opt-in: visible as a neighbor on Jalan (doctrine: unlisted by default)
+CREATE TABLE IF NOT EXISTS tamu(                 -- buku tamu: visitors' notes, owner-read (kunci)
+  id INTEGER PRIMARY KEY AUTOINCREMENT, handle TEXT NOT NULL,
+  nama TEXT, pesan TEXT NOT NULL, at TEXT);

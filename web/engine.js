@@ -96,14 +96,14 @@ const MAPS = {
   '..x....x.....x....x..',
   '..xx..xx.....xx..xx..',
   '...xxxx.......xxxx...'],
- jemuran: ['x............................x',
-  'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
-  'x..tt....cc.....ii....mm.....x',
-  'x..tt....cc.....ii....mm.....x',
-  'x..tt....cc.....ii....mm.....x',
-  'x...t.....c.....i......m.....x',
-  'x............................x',
-  'x............................x'],
+ jemuran: ['K............................K',
+  'KxxxxxxxxxxxxxxxxxxxxxxxxxxxxK',
+  'K.ccccc...iiiii...CCCCC..III.K',
+  'K..ccc.....iii.....CCC...III.K',
+  'K..ccc.....iii.....CCC...III.K',
+  'K..c.c.....i.i.....C.C....I..K',
+  'K............................K',
+  'K............................K'],
  // fallback dog (2-frame trot) — superseded if the Ninja animal sheets land
  anjing0: ['.kkk........','kkkkk.......','kk.kssssssss','.kkssssssss.','..ssssssss..',
   '..s..ss..s..','..s..ss..s..'],
@@ -394,7 +394,7 @@ function generateHome(p){
   const sc={ name:'RUMAH '+(p.nama||'').toUpperCase(), ground:'interior', W:144,H:224,
     wallH:52, spawn:[72,190], path:[0,0],
     colliders:[[0,0,144,74],[0,0,5,224],[139,0,5,224],
-      [62,162,16,8],[110,150,12,8],[126,64,10,6]],
+      [62,162,16,8],[110,150,12,8],[126,64,10,6],[12,60,26,16]],
     placements:[
       {component:'window-l',x:10,y:12},{component:'lampu-gantung',x:64,y:0},
       {component:'tanaman-gantung',x:34,y:2},
@@ -441,6 +441,18 @@ function bindUI(){
   ui.dclose.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();closeDlg();});
   const KM={ArrowLeft:'L',a:'L',ArrowRight:'R',d:'R',ArrowUp:'U',w:'U',ArrowDown:'D',s:'D'};
   addEventListener('keydown',e=>{ if(document.activeElement===ui.dinput){ if(e.key==='Enter')advDlg(); return; }
+    // arrow-key selection on dialog choices (desktop)
+    if(st.dlg){ const chc=[...ui.dchoices.querySelectorAll('button.chc')];
+      if(chc.length){
+        if(e.key==='ArrowDown'||e.key==='ArrowUp'){ e.preventDefault();
+          let i=chc.findIndex(b=>b.classList.contains('sel'));
+          chc.forEach(b=>b.classList.remove('sel'));
+          i=e.key==='ArrowDown'?(i+1)%chc.length:(i<=0?chc.length-1:i-1);
+          chc[i].classList.add('sel'); return; }
+        if(e.key==='Enter'||e.key==='e'||e.key===' '){
+          const s=chc.find(b=>b.classList.contains('sel'));
+          if(s){ e.preventDefault();
+            s.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true})); return; } } } }
     if(KM[e.key]){e.preventDefault();keys[KM[e.key]]=true;}
     if(e.key==='e'||e.key==='Enter'||e.key===' '){e.preventDefault();act();} });
   addEventListener('keyup',e=>{ if(KM[e.key])keys[KM[e.key]]=false; });

@@ -9,6 +9,11 @@ import CATALOG from '../web/catalog.json';
 const INTENTS = new Set(['none', 'serve_kopi', 'start_interview', 'recap']);
 const HANDLE = /^[a-z0-9-]{1,24}$/;
 
+const sha256hex = async (s) => {
+  const d = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s));
+  return [...new Uint8Array(d)].map(b => b.toString(16).padStart(2, '0')).join('');
+};
+
 // per-isolate IP brake (best-effort: resets on isolate eviction, which is fine —
 // it exists to stop dumb loops, not determined attackers; D1 daily cap does the rest)
 const IPS = new Map();
@@ -36,7 +41,10 @@ export default {
       return json({ user, kopi: row?.balance ?? 1 }); // cangkir pertama kutraktir
     }
 
-    // rumah: save + serve — this is what makes the QR card URL REAL
+    // rumah: save + serve — this is what makes the QR card URL REAL.
+    // Claim-token model: first save of a handle MINTS a kunci (uuid), returned
+    // exactly once; every later write must present it. Legacy rows (secret_hash
+    // NULL, pre-auth era) are claimed by their next writer.
     if (url.pathname === '/api/rumah' && req.method === 'POST') {
       const b = await req.json().catch(() => null);
       if (!b || !HANDLE.test(b.handle || '')) return json({ error: 'handle tidak sah' }, 400);
@@ -44,12 +52,91 @@ export default {
       const manifest = JSON.stringify(b.manifest || {});
       if (persona.length > 2048 || manifest.length > 32768)
         return json({ error: 'terlalu besar' }, 413);
-      await env.DB.prepare(`INSERT INTO rumah(handle,persona,manifest,updated_at)
-        VALUES(?,?,?,datetime('now'))
-        ON CONFLICT(handle) DO UPDATE SET persona=excluded.persona,
-          manifest=excluded.manifest, updated_at=excluded.updated_at`)
-        .bind(b.handle, persona, manifest).run();
+      const terdaftar = b.terdaftar ? 1 : 0;
+      const row = await env.DB.prepare(
+        'SELECT secret_hash FROM rumah WHERE handle=?').bind(b.handle).first();
+      if (!row) {
+        const token = crypto.randomUUID();
+        await env.DB.prepare(`INSERT INTO rumah(handle,persona,manifest,secret_hash,terdaftar,updated_at)
+          VALUES(?,?,?,?,?,datetime('now'))`)
+          .bind(b.handle, persona, manifest, await sha256hex(token), terdaftar).run();
+        return json({ ok: true, url: '/@' + b.handle, token, baru: true });
+      }
+      if (!row.secret_hash) {
+        const token = crypto.randomUUID();
+        await env.DB.prepare(`UPDATE rumah SET persona=?,manifest=?,secret_hash=?,terdaftar=?,
+          updated_at=datetime('now') WHERE handle=?`)
+          .bind(persona, manifest, await sha256hex(token), terdaftar, b.handle).run();
+        return json({ ok: true, url: '/@' + b.handle, token, baru: true });
+      }
+      if (!b.token) return json({ error: 'sudah dipakai' }, 409);
+      // comparing HASHES (attacker can't choose the stored preimage) blunts
+      // string-compare timing; good enough for a game kunci.
+      if (await sha256hex(String(b.token)) !== row.secret_hash)
+        return json({ error: 'kunci salah' }, 403);
+      await env.DB.prepare(`UPDATE rumah SET persona=?,manifest=?,terdaftar=?,
+        updated_at=datetime('now') WHERE handle=?`)
+        .bind(persona, manifest, terdaftar, b.handle).run();
       return json({ ok: true, url: '/@' + b.handle });
+    }
+
+    // recovery: handle + kunci → full persona/manifest (new phone, wiped browser)
+    if (url.pathname === '/api/rumah/cek' && req.method === 'POST') {
+      const b = await req.json().catch(() => ({}));
+      if (!HANDLE.test(b.handle || '') || !b.token) return json({ error: 'kurang lengkap' }, 400);
+      const row = await env.DB.prepare(
+        'SELECT persona,manifest,secret_hash FROM rumah WHERE handle=?').bind(b.handle).first();
+      if (!row || !row.secret_hash || await sha256hex(String(b.token)) !== row.secret_hash)
+        return json({ error: 'kunci salah' }, 403);
+      return json({ ok: true, handle: b.handle, persona: JSON.parse(row.persona),
+        manifest: JSON.parse(row.manifest) });
+    }
+
+    // buku tamu: anyone may write (brake + caps); only the kunci-holder reads
+    if (url.pathname === '/api/tamu' && req.method === 'POST') {
+      if (!ipOk(req.headers.get('cf-connecting-ip') || '?'))
+        return json({ error: 'pelan-pelan ☕' }, 429);
+      const b = await req.json().catch(() => ({}));
+      if (!HANDLE.test(b.handle || '')) return json({ error: 'handle tidak sah' }, 400);
+      const nama = String(b.nama || 'tamu').slice(0, 24);
+      const pesan = String(b.pesan || '').trim().slice(0, 280);
+      if (!pesan) return json({ error: 'pesan kosong' }, 400);
+      const owner = await env.DB.prepare(
+        'SELECT handle FROM rumah WHERE handle=?').bind(b.handle).first();
+      if (!owner) return json({ error: 'belum ada' }, 404);
+      const n = await env.DB.prepare(
+        'SELECT COUNT(*) c FROM tamu WHERE handle=?').bind(b.handle).first();
+      if ((n?.c ?? 0) >= 200) return json({ error: 'buku tamunya penuh' }, 429);
+      await env.DB.prepare(
+        "INSERT INTO tamu(handle,nama,pesan,at) VALUES(?,?,?,datetime('now'))")
+        .bind(b.handle, nama, pesan).run();
+      return json({ ok: true });
+    }
+    if (url.pathname === '/api/tamu/baca' && req.method === 'POST') {
+      const b = await req.json().catch(() => ({}));
+      const row = await env.DB.prepare(
+        'SELECT secret_hash FROM rumah WHERE handle=?').bind(String(b.handle || '')).first();
+      if (!row?.secret_hash || !b.token ||
+          await sha256hex(String(b.token)) !== row.secret_hash)
+        return json({ error: 'kunci salah' }, 403);
+      const rs = await env.DB.prepare(
+        'SELECT id,nama,pesan,at FROM tamu WHERE handle=? ORDER BY id DESC LIMIT 40')
+        .bind(b.handle).all();
+      return json({ ok: true, catatan: rs.results || [] });
+    }
+
+    // jalan v0: opted-in neighbors in kavling (signup) order. The embedding-
+    // ranked "garis minat" replaces the ORDER BY later; the contract stays.
+    if (url.pathname === '/api/jalan' && req.method === 'GET') {
+      const me = url.searchParams.get('me') || '';
+      const rs = await env.DB.prepare(`SELECT handle,persona,updated_at FROM rumah
+        WHERE terdaftar=1 AND handle!=? ORDER BY rowid ASC LIMIT 8`).bind(me).all();
+      const now = Date.now();
+      return json({ tetangga: (rs.results || []).map(r => { let p = {};
+        try { p = JSON.parse(r.persona); } catch (e) {}
+        const at = new Date(String(r.updated_at || '').replace(' ', 'T') + 'Z').getTime();
+        return { handle: r.handle, nama: p.nama || r.handle,
+          aktif: Number.isFinite(at) && (now - at) < 48 * 3600e3 }; }) });
     }
     if (url.pathname === '/api/rumah' && req.method === 'GET') {
       const h = url.searchParams.get('handle') || '';
@@ -91,8 +178,11 @@ export default {
       const h = String(b.handle || '');
       if (!HANDLE.test(h)) return json({ fallback: true, reason: 'handle dulu' });
       const row = await env.DB.prepare(
-        'SELECT bangun_day,bangun_count FROM rumah WHERE handle=?').bind(h).first();
+        'SELECT secret_hash,bangun_day,bangun_count FROM rumah WHERE handle=?').bind(h).first();
       if (!row) return json({ fallback: true, reason: 'rumah belum tercatat' });
+      if (!row.secret_hash || !b.token ||
+          await sha256hex(String(b.token)) !== row.secret_hash)
+        return json({ fallback: true, reason: 'butuh kunci rumah' });
       const today = new Date().toISOString().slice(0, 10); // UTC day; WIB skews the
       const used = row.bangun_day === today ? row.bangun_count : 0; // reset hour, fine v0.7
       if (used >= 5)
