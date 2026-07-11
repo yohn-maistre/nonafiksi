@@ -3,6 +3,71 @@
 Written for a reader with amnesia. Each entry: what happened, what's true
 now, what's next.
 
+## 2026-07-11 — 🟢 v0.7 "Malam Kedai": BACKEND LIVE, world alive, kedai bar, ubah rumah
+
+**THE DEPLOY IS FIXED.** Yose repaired the CF token; full CI pipeline green
+for the first time: Pages + D1 (bootstrapped, final schema) + Worker + DO all
+live. Worker URL: **https://nonafiksi-api.giyaibo.workers.dev** (health,
+rumah save/read, /@handle pages all verified by curl). Client now DEFAULTS
+to the live worker (game.js NF_API fallback; localStorage nf_api overrides,
+'off' forces offline). `web/_redirects` 302s nonafiksi.pages.dev/@handle →
+worker, so the QR card URL is finally real.
+
+v0.7 shipped (plan: ~/.claude/plans/hey-broski-good-to-structured-balloon.md):
+
+- **Engine NPC brains** (engine.js stepNpc, all data-driven from scene JSON):
+  horizontal patrol {x0,x1}, wander-and-pause {wander:[x,y,w,h]}, chase pairs
+  {chase:'id',ox,oy}, 2-frame custom anim {anim,animMs}, strip-sheet animals
+  {strip,fw,fh} with flip-x (Ninja animals are 2-frame side strips, NOT 4-dir
+  — dog frames are 18px wide). New FX: birds (day V-flock) + butterfly. New
+  DECOS: rakBotol (parametric sirup/kopi/jamu bottle shelf, paper labels —
+  Yose's kedai-malam call: bar ENERGY, zero liquor coding). New MAPS:
+  nonaBar0/1 (glass-polishing), gelas, gerobak, jemuran, anjing fallback.
+- **Street lives**: kid chasing the Ninja dog, 2 chickens at the kios, walker
+  crossing the path, wanderer, birds overhead, gerobak sate ("SEBENTAR —
+  SALAT"), jemuran. **Player's house is VISIBLE** at the south end over the
+  pulang exit; the papan beside it becomes their nameplate
+  (placeHomeOnStreet). Exiting home lands AT the house (street 72,618) so
+  the whole street unrolls on the walk north to the kedai.
+- **Interview now TELEPORTS home** ("jalan pintas penulis" fade via api.goto)
+  — the walk-home is optional flavor, not a chore. Posts reordered: rumah
+  saved FIRST (bangun's rate limit lives on the row), then /api/bangun with
+  handle, plan applied + persisted (localStorage nf_plan — LLM decor now
+  survives reloads; buildRumah re-applies).
+- **Kedai malam**: rakBotol shelf behind the bar, Nona polishing a glass
+  (2-frame), 3rd stool + 3 new patrons, gelas on counter/table, menu adds
+  Es Sirup + Wedang Jahe.
+- **Ubah rumah** (door menu): links edit/add/delete (max 4), vibe, quote,
+  display name (@handle immutable — it's the address), rebuild through the
+  fade + saveRumah to worker.
+- **Worker guards** (before NIM key lands): /api/bangun = per-IP brake
+  (10/min, in-isolate Map), 4KB body cap, 5/day per handle in D1
+  (bangun_day/bangun_count, charged on attempt, UTC day). /@handle links
+  https-only (javascript: hole closed). rumah table pre-baked with
+  secret_hash for tomorrow's claim-token auth (migration-free).
+- **Assets**: Ninja dog + chicken re-fetched via itch download_url flow
+  (CC0, SUMBER rows; full roster note: pack also has cow/horse/pig/parrot/
+  frog etc.). build.py utf-8-explicit (Windows cp1252 fix) + new sheets;
+  bundle 344KB.
+
+**Scout verdicts logged**: voxel REJECTED (WebGL vs doctrine, kills the CC0
+pipeline) — stay 16px pixel; free-VPS fallback ranking Deno Deploy → Render
+→ Oracle Always Free (Fly/Railway no longer free) — CF free tier fine.
+Bottles: no CC0 tavern pack exists; rakBotol custom was the right move
+(Pop Shop Bottles pack = in-game-only license, unneeded).
+
+**⚠️ ACCEPTED RISK (Yose's explicit call, fix TOMORROW)**: /api/rumah is an
+open upsert — anyone can overwrite any @handle. Claim-token design is ready
+(plan file "Tomorrow" section; schema already has secret_hash): first POST
+mints a token, updates require it, /api/rumah/cek recovers. ~1-2h drop-in.
+
+**Needs-from-Yose**: (1) NIM_API_KEY repo secret → re-run deploy → /api/bangun
+lights up (guards already live); (2) phone playtest v0.7 at nonafiksi.pages.dev
+— teleport beat, street life + own house + sign, kedai shelf reading
+(sirup/jamu, his eye), ubah rumah + reload persistence, QR card scan from a
+second phone; (3) unchanged ledger (domain, Mayar, paid asset tail, Bapa
+Benny, song licensing).
+
 ## 2026-07-06 (arc 2) — v0.6: title screen, joystick, cafe makeover, QR card, Oligarki Bab 1, NIM home-builder
 
 Yose's second vision dump executed same-day (plan:
