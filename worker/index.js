@@ -35,18 +35,22 @@ const ipOk = (ip, cap) => {
 // tms = per-lane patience: GLM's free-tier queue 524s at peak (live-verified
 // 2026-07-13) and a hot queue never answers fast, so it gets a short probe
 // window; the workhorse lanes get room to actually generate.
+const NIM_URL = 'https://integrate.api.nvidia.com/v1/chat/completions';
+// Lane ladder, quality-first (live-measured 2026-07-13, 200-token gen):
+// GLM-5.2 524s at peak so it gets a short probe window and reclaims the mic
+// when its queue clears (breaker re-probes 90s); qwen3-next (3B active) did
+// ~17s; llama-8b (1.3s) is the never-dark floor. Gemini slots in above the
+// floor once GOOGLE_API_KEY lands.
 const LANES = (env) => [
   env.NIM_API_KEY && { lane: 'nim', tms: 12000,
-    url: 'https://integrate.api.nvidia.com/v1/chat/completions',
-    key: env.NIM_API_KEY, model: 'z-ai/glm-5.2' },
-  // fast NIM lane on the same key — GLM reclaims the mic the moment its
-  // queue clears (breaker re-probes every 90s)
-  env.NIM_API_KEY && { lane: 'nim-cepat', tms: 40000,
-    url: 'https://integrate.api.nvidia.com/v1/chat/completions',
-    key: env.NIM_API_KEY, model: 'meta/llama-3.3-70b-instruct' },
+    url: NIM_URL, key: env.NIM_API_KEY, model: 'z-ai/glm-5.2' },
+  env.NIM_API_KEY && { lane: 'nim-qwen', tms: 35000,
+    url: NIM_URL, key: env.NIM_API_KEY, model: 'qwen/qwen3-next-80b-a3b-instruct' },
   env.GOOGLE_API_KEY && { lane: 'gemini', tms: 30000,
     url: 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',
     key: env.GOOGLE_API_KEY, model: 'gemini-2.5-flash' },
+  env.NIM_API_KEY && { lane: 'nim-kilat', tms: 12000,
+    url: NIM_URL, key: env.NIM_API_KEY, model: 'meta/llama-3.1-8b-instruct' },
 ].filter(Boolean);
 // circuit breaker (per-isolate): a lane that just failed rests 90s so a dead
 // NIM queue doesn't tax every message with a full timeout before the fallback

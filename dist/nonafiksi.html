@@ -2017,10 +2017,15 @@ const wire = (api)=>{
     post('/api/aksara',{sesi:SESI(),state:AKSTATE(),...payload})
       .then(r=>r.json()).then(r=>render(r,payload))
       .catch(()=>gagal(payload)); };
-  const gagal=(payload)=>api.runScript([
-    {say:TELEPON[(Math.random()*TELEPON.length)|0],choices:[
-      {label:'KUTUNGGU, NONA',then:()=>kirim(payload)},
-      {label:'Lain kali saja ☕',then:()=>api.closeDlg()}]}]);
+  let gagalN=0; // 2 strikes → she offers the paper notebook (scripted flow)
+  const gagal=(payload)=>{ gagalN++;
+    const ch=[{label:'KUTUNGGU, NONA',then:()=>kirim(payload)},
+      {label:'Lain kali saja ☕',then:()=>{gagalN=0;api.closeDlg();}}];
+    if(gagalN>=2)ch.splice(1,0,{label:'PAKAI BUKU CATATAN SAJA ✦',
+      then:()=>{gagalN=0;AKSARA_LANE='mati';api.closeDlg();S.warung.onTalk();}});
+    api.runScript([{say:gagalN>=2
+      ?"(Ia kembali, agak terengah.) Maaf, maaf — hari ini percetakan rewel sekali. Kalau kau buru-buru, kita pakai buku catatan kertasku saja dulu?"
+      :TELEPON[(Math.random()*TELEPON.length)|0],choices:ch}]); };
   const commitInterview=(d,sayAkhir)=>{
     d.nama=d.nama||'Tamu'; d.handle=d.handle||slug(d.nama);
     d.links=d.links||[]; d.vibe=d.vibe||'hangat';
@@ -2037,6 +2042,7 @@ const wire = (api)=>{
   const render=(r,payload)=>{
     if(!r||r.macet||r.error)return gagal(payload);
     if(r.mati){ AKSARA_LANE='mati'; api.closeDlg(); return S.warung.onTalk(); }
+    gagalN=0;
     if(r.tutup||r.sibuk)return api.runScript([{say:r.say||'Besok lagi ya. ☕'}]);
     const per=api.persona.get();
     if(r.patch){ // the validator upstream already ruled; apply + persist
