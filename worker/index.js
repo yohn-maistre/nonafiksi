@@ -36,6 +36,12 @@ const LANES = (env) => [
   env.NIM_API_KEY && { lane: 'nim',
     url: 'https://integrate.api.nvidia.com/v1/chat/completions',
     key: env.NIM_API_KEY, model: 'z-ai/glm-5.2' },
+  // GLM-5.2's free-tier queue 524s at peak (live-verified 2026-07-13); this
+  // fast NIM lane keeps her alive on the same key — GLM reclaims the mic the
+  // moment its queue clears (breaker re-probes every 90s)
+  env.NIM_API_KEY && { lane: 'nim-cepat',
+    url: 'https://integrate.api.nvidia.com/v1/chat/completions',
+    key: env.NIM_API_KEY, model: 'meta/llama-3.3-70b-instruct' },
   env.GOOGLE_API_KEY && { lane: 'gemini',
     url: 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',
     key: env.GOOGLE_API_KEY, model: 'gemini-2.5-flash' },
