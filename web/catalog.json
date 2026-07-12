@@ -448,5 +448,90 @@
    "title": "Jemuran",
    "body": "Cucian tetangga menari pelan. Hari yang baik untuk mengeringkan apa saja — termasuk kenangan."
   }
+ },
+ "kasur-besar": {
+  "custom": "kasurBesar",
+  "w": 20,
+  "h": 16,
+  "tags": [
+   "interior",
+   "rumah"
+  ],
+  "interact": {
+   "type": "text",
+   "title": "Kasur",
+   "body": "Selimut terakota, bantal yang hafal bentuk kepalamu. Rumah dimulai dari sini."
+  }
+ },
+ "lemari": {
+  "custom": "lemari",
+  "w": 18,
+  "h": 16,
+  "tags": [
+   "interior",
+   "rumah"
+  ],
+  "interact": {
+   "type": "text",
+   "title": "Lemari",
+   "body": "Dua pintu, satu engsel berderit. Isinya rahasia pemilik rumah."
+  }
+ },
+ "meja-kerja": {
+  "custom": "mejaKerja",
+  "w": 30,
+  "h": 8,
+  "tags": [
+   "interior",
+   "rumah"
+  ]
+ },
+ "rak-tautan": {
+  "custom": "rakTautan",
+  "w": 28,
+  "h": 10,
+  "tags": [
+   "interior",
+   "rumah"
+  ]
+ },
+ "jam-dinding": {
+  "custom": "jamDinding",
+  "flat": true,
+  "w": 9,
+  "h": 7,
+  "tags": [
+   "interior",
+   "rumah"
+  ],
+  "interact": {
+   "type": "text",
+   "title": "Jam Dinding",
+   "body": "Detaknya pelan, seperti warung sebelum tutup. Waktu di sini milikmu sendiri."
+  }
+ },
+ "foto-string": {
+  "custom": "fotoString",
+  "flat": true,
+  "w": 40,
+  "h": 7,
+  "tags": [
+   "interior",
+   "rumah"
+  ]
+ },
+ "buku-tamu": {
+  "custom": "bukuTamu",
+  "w": 12,
+  "h": 8,
+  "tags": [
+   "interior",
+   "rumah"
+  ],
+  "interact": {
+   "type": "text",
+   "title": "Buku Tamu",
+   "body": "Halaman-halamannya menunggu salam. Tamu menulis lewat pintu — menu BUKU TAMU."
+  }
  }
 }

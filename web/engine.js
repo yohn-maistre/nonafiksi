@@ -108,7 +108,40 @@ const MAPS = {
  anjing0: ['.kkk........','kkkkk.......','kk.kssssssss','.kkssssssss.','..ssssssss..',
   '..s..ss..s..','..s..ss..s..'],
  anjing1: ['.kkk........','kkkkk.......','kk.kssssssss','.kkssssssss.','..ssssssss..',
-  '..s.s..s.s..','.s...s....s.']
+  '..s.s..s.s..','.s...s....s.'],
+ // ---- rumah v2: real furniture (the house should read at a glance) ----
+ kasurBesar: ['xWWWWWWWWWWWWWWWWWWx','xWWWWWWWWWWWWWWWWWWx','xWccccccccccccccccWx',
+  'xWccccccccccccccccWx','xWCCCCCCCCCCCCCCCCWx','xttttttttttttttttttx',
+  'xttttttttttttttttttx','xttggttttttttttggttx','xttttttttttttttttttx',
+  'xttttttttttttttttttx','xttggttttttttttggttx','xttttttttttttttttttx',
+  'xttttttttttttttttttx','xCCCCCCCCCCCCCCCCCCx','xccccccccccccccccccx',
+  'xxxxxxxxxxxxxxxxxxxx'],
+ lemari: ['xxxxxxxxxxxxxxxxxx','xwwwwwwwwxwwwwwwwx','xwwwwwwwwxwwwwwwwx',
+  'xwwwwwwwwxwwwwwwwx','xwwwwwwgwxwgwwwwwx','xwwwwwwgwxwgwwwwwx',
+  'xwwwwwwwwxwwwwwwwx','xwwwwwwwwxwwwwwwwx','xWWWWWWWWxWWWWWWWx',
+  'xwwwwwwwwxwwwwwwwx','xwwwwwwwwxwwwwwwwx','xwwwwwwwwxwwwwwwwx',
+  'xwwwwwwwwxwwwwwwwx','xwwwwwwwwxwwwwwwwx','xxxxxxxxxxxxxxxxxx',
+  'x.x............x.x'],
+ mejaKerja: ['WWWWWWWWWWWWWWWWWWWWWWWWWWWWWW','WwwwwwwwwwwwwwwwwwwwwwwwwwwwwW',
+  'Www.ccccccc..iii..gg..wwwwwwwW','Www.ccccccc..iii......wwwwwwwW',
+  'WwwwwwwwwwwwwwwwwwwwwwwwwwwwwW','WWWWWWWWWWWWWWWWWWWWWWWWWWWWWW',
+  '.WW........................WW.','.WW........................WW.'],
+ rakTautan: ['xxxxxxxxxxxxxxxxxxxxxxxxxxxx','xttiiddggttiiddggttiiddggtix',
+  'xttiiddggttiiddggttiiddggtix','xWWWWWWWWWWWWWWWWWWWWWWWWWWx',
+  'xiiggttddiiggttddiiggttddiix','xiiggttddiiggttddiiggttddiix',
+  'xWWWWWWWWWWWWWWWWWWWWWWWWWWx','x.........cccccccc.........x',
+  'x.........cccccccc.........x','xxxxxxxxxxxxxxxxxxxxxxxxxxxx'],
+ jamDinding: ['.xxxxxxx.','xcccccccx','xcccicccx','xcccicccx','xccciiccx',
+  'xcccccccx','.xxxxxxx.'],
+ fotoString: ['K......................................K',
+  'KxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxK',
+  'K..cccc....cccc.....cccc....cccc.......K',
+  'K..cggc....cddc.....cttc....ciic.......K',
+  'K..cggc....cddc.....cttc....ciic.......K',
+  'K..cccc....cccc.....cccc....cccc.......K',
+  'K..cccc....cccc.....cccc....cccc.......K'],
+ bukuTamu: ['.cccccccccc.','.ciiicciiic.','.cccccccccc.','.ciiccciicc.',
+  '.cccccccccc.','.xxxxxxxxxx.','....xxxx....','...xxxxxx...']
 };
 function spr(map, pal) { pal = pal || PAL;
   const w = Math.max(...map.map(r=>r.length)), h = map.length,
@@ -395,30 +428,47 @@ function goto(name,sx,sy){ st.fading=true; ui.fade.classList.add('on');
     ui.loc.textContent=sc.name; ui.fade.classList.remove('on'); st.fading=false;
     if(sc.onEnter){const f=sc.onEnter; if(sc.onEnterOnce)sc.onEnter=null; setTimeout(f,260);} },240); }
 function generateHome(p){
+  // rumah v2 — the whole house reads in ONE glance (H 224 < viewport 256, camY
+  // pinned at 0): a furnished studio, links as real bookshelves, walls that
+  // carry the person (clock, polaroid string, poster quote).
   const links=(p.links||[]).slice(0,4);
   const sc={ name:'RUMAH '+(p.nama||'').toUpperCase(), ground:'interior', W:144,H:224,
     wallH:52, spawn:[72,190], path:[0,0],
-    colliders:[[0,0,144,74],[0,0,5,224],[139,0,5,224],
-      [62,162,16,8],[110,150,12,8],[126,64,10,6],[12,60,26,16]],
+    colliders:[[0,0,144,62],[0,0,5,224],[139,0,5,224],
+      [102,58,30,8],[112,66,10,4],[64,142,16,6],[116,162,10,5],
+      [28,180,12,4],[128,172,10,5]],
     placements:[
-      {component:'window-l',x:10,y:12},{component:'lampu-gantung',x:64,y:0},
-      {component:'tanaman-gantung',x:34,y:2},
-      {component:'poster',x:104,y:14,interact:{type:'text',title:'Poster',body:(p.quote||'Ceritamu tetap milikmu. — Nona Aksara')}},
-      {component:'kasur',x:12,y:52},{component:'tanaman',x:126,y:60},
-      {component:'karpet',x:48,y:138},
-      {component:'meja-bundar',x:62,y:162},{component:'cangkir',x:66,y:158},
-      {component:'musik',x:110,y:150,interact:{type:'text',title:'Pemutar Musik',body:'V1: tautkan lagu favoritmu di sini. (Segera)'}},
-      {component:'frame',x:52,y:16,interact:{type:'text',title:'Bingkai Foto',body:'Foto-fotomu akan dipajang di sini. (Unggah — segera)'}}],
+      {component:'window-l',x:6,y:10},{component:'lampu-gantung',x:64,y:0},
+      {component:'jam-dinding',x:50,y:6},
+      {component:'foto-string',x:48,y:24,interact:{type:'text',title:'Dinding Polaroid',
+        body:'Empat kenangan menggantung di tali. Fotomu sendiri menyusul — unggah, segera. ✦'}},
+      {component:'poster',x:100,y:10,interact:{type:'text',title:'Poster',body:(p.quote||'Ceritamu tetap milikmu. — Nona Aksara')}},
+      {component:'tanaman-gantung',x:118,y:0},
+      {component:'kasur-besar',x:8,y:44},
+      {component:'lemari',x:30,y:36},
+      {component:'meja-kerja',x:102,y:52,interact:{type:'text',title:'Meja Kerja',
+        body:'Kertas, buku, kopi setengah dingin. Di sinilah semuanya dikerjakan.'}},
+      {component:'kursi',x:112,y:62},
+      {component:'karpet',x:48,y:104},
+      {component:'meja-bundar',x:64,y:138},{component:'cangkir',x:68,y:134},
+      {component:'gelas',x:82,y:140},
+      {component:'musik',x:116,y:158,interact:{type:'text',title:'Pemutar Musik',body:'V1: tautkan lagu favoritmu di sini. (Segera)'}},
+      {component:'buku-tamu',x:28,y:176},
+      {component:'tanaman',x:128,y:168}],
     npcs:[], fx:[],
     exits:[{x:56,y:206,w:34,h:18,label:'✦ KELUAR',menu:true}] };
-  links.forEach((l,i)=>{ sc.placements.push({component:'rak',x:20+ (i%2)*62, y:92+(i/2|0)*44,
-    interact:{type:'link',title:l.label||('Tautan '+(i+1)),body:l.url,url:l.url}});
-    sc.colliders.push([20+(i%2)*62,92+(i/2|0)*44,48,10]); });
-  if(p.vibe==='ramai'){ sc.placements.push({component:'bantal-duduk',x:112,y:186},
-      {component:'tanaman',x:8,y:130},{component:'karpet',x:48,y:130});
-    sc.colliders.push([8,134,10,6]); }
-  if(p.vibe==='hangat'){ sc.placements.push({component:'karpet',x:48,y:120},
-      {component:'kucing',x:118,y:184,interact:{type:'text',title:'Kucing',body:'Ia sudah menganggap ini rumahnya juga.'}}); }
+  const RAKPOS=[[10,90],[106,90],[10,126],[106,126]];
+  links.forEach((l,i)=>{ const rp=RAKPOS[i];
+    sc.placements.push({component:'rak-tautan',x:rp[0],y:rp[1],
+      interact:{type:'link',title:l.label||('Tautan '+(i+1)),body:l.url,url:l.url}});
+    sc.colliders.push([rp[0],rp[1]+6,28,4]); });
+  if(p.vibe==='ramai'){ sc.placements.push({component:'bantal-duduk',x:40,y:158},
+      {component:'tanaman',x:8,y:160});
+    sc.colliders.push([8,164,10,5]); }
+  if(p.vibe==='hangat'){ sc.placements.push(
+      {component:'kucing',x:114,y:186,interact:{type:'text',title:'Kucing',body:'Ia sudah menganggap ini rumahnya juga.'}}); }
+  if(p.vibe==='rapi'){ sc.placements.push({component:'tanaman',x:8,y:164});
+    sc.colliders.push([8,168,10,5]); }
   return sc; }
 
 // ---------- input ----------

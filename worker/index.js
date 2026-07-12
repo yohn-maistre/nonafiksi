@@ -1,12 +1,11 @@
 // NonaFiksi API — Worker (routes, guardrails) → DO NonaAgent (per-user memory)
-// → D1 (canonical store) → LLM gateway (NIM deepseek → scripted fallback).
+// → D1 (canonical store) → LLM gateway (NIM GLM → Gemini → honest 'mati').
 // Guardrail invariant: the LLM only ever returns constrained JSON; this
 // Worker's deterministic validator/reducer is the ONLY writer of game state.
 // Steering receipts: docs/research/npc-steering-cookbook.md
 
 import CATALOG from '../web/catalog.json';
 
-const INTENTS = new Set(['none', 'serve_kopi', 'start_interview', 'recap']);
 const HANDLE = /^[a-z0-9-]{1,24}$/;
 // gang facets — opt-in SELF-labels only (profession/place/interest; never
 // religion/ethnicity/age — SARA rule). Streets are views over the rumah table.
@@ -23,12 +22,48 @@ const sha256hex = async (s) => {
 // per-isolate IP brake (best-effort: resets on isolate eviction, which is fine —
 // it exists to stop dumb loops, not determined attackers; D1 daily cap does the rest)
 const IPS = new Map();
-const ipOk = (ip) => {
+const ipOk = (ip, cap) => {
   const now = Date.now(); const e = IPS.get(ip) || { n: 0, at: now };
   if (now - e.at > 60000) { e.n = 0; e.at = now; }
   e.n++; if (IPS.size > 2000) IPS.clear(); IPS.set(ip, e);
-  return e.n <= 10;
+  return e.n <= (cap || 10);
 };
+
+// ---- LLM gateway: NIM (GLM) primary → Gemini fallback. Both speak the
+// OpenAI chat shape, so a lane swap is just url+model+key. When every lane
+// is dead the CALLER decides the fiction — never a silent template swap.
+const LANES = (env) => [
+  env.NIM_API_KEY && { lane: 'nim',
+    url: 'https://integrate.api.nvidia.com/v1/chat/completions',
+    key: env.NIM_API_KEY, model: 'z-ai/glm-5.2' },
+  env.GOOGLE_API_KEY && { lane: 'gemini',
+    url: 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',
+    key: env.GOOGLE_API_KEY, model: 'gemini-2.5-flash' },
+].filter(Boolean);
+async function llmChat(env, messages, opts = {}) {
+  let err = new Error('tanpa kunci');
+  for (const L of LANES(env)) {
+    try {
+      const ctl = new AbortController();
+      const tid = setTimeout(() => ctl.abort('lambat'), opts.timeoutMs || 25000);
+      const r = await fetch(L.url, { method: 'POST', signal: ctl.signal,
+        headers: { authorization: 'Bearer ' + L.key, 'content-type': 'application/json' },
+        body: JSON.stringify({ model: L.model, temperature: opts.temperature ?? 0.85,
+          max_tokens: opts.maxTokens || 500, messages }) });
+      clearTimeout(tid);
+      if (!r.ok) throw new Error(L.lane + ' ' + r.status);
+      const d = await r.json();
+      const txt = String(d.choices?.[0]?.message?.content || '')
+        .replace(/<think>[\s\S]*?<\/think>/g, '').trim();
+      if (!txt) throw new Error(L.lane + ' kosong');
+      return { text: txt, lane: L.lane };
+    } catch (e) { err = e; }
+  }
+  throw err;
+}
+const jsonOut = (txt) => {
+  const m = String(txt).replace(/```json|```/g, '').match(/\{[\s\S]*\}/);
+  if (!m) throw new Error('no json'); return JSON.parse(m[0]); };
 const CORS = { 'access-control-allow-origin': '*',
   'access-control-allow-methods': 'GET,POST,OPTIONS',
   'access-control-allow-headers': 'content-type' };
@@ -37,7 +72,8 @@ export default {
   async fetch(req, env) {
     const url = new URL(req.url);
     if (req.method === 'OPTIONS') return new Response(null, { headers: CORS });
-    if (url.pathname === '/api/health') return json({ ok: true, warung: 'buka' });
+    if (url.pathname === '/api/health') return json({ ok: true, warung: 'buka',
+      aksara: env.NIM_API_KEY ? 'nim' : (env.GOOGLE_API_KEY ? 'gemini' : 'mati') });
 
     // kopi balance — D1 is the counter store (never KV: 1k writes/day wall)
     if (url.pathname === '/api/kopi' && req.method === 'GET') {
@@ -202,7 +238,7 @@ export default {
     // and a per-handle daily cap of 5 charged on ATTEMPT (fail-closed). The handle's
     // rumah row must already exist — the client always saves the home first.
     if (url.pathname === '/api/bangun' && req.method === 'POST') {
-      if (!env.NIM_API_KEY) return json({ fallback: true, reason: 'kunci belum ada' });
+      if (!LANES(env).length) return json({ fallback: true, reason: 'kunci belum ada' });
       if (!ipOk(req.headers.get('cf-connecting-ip') || '?'))
         return json({ error: 'pelan-pelan ☕' }, 429);
       const raw = await req.text();
@@ -224,6 +260,26 @@ export default {
         .bind(today, used + 1, h).run();
       const plan = await bangunRumah(b.persona || {}, env).catch(() => null);
       return plan ? json({ plan }) : json({ fallback: true, reason: 'mesin cetak tersedak' });
+    }
+
+    // aksara: the LIVE conversation — one DO per session (the DO is her memory
+    // of you). Body: {sesi, pesan?|buka?, state}. Reply: validated contract
+    // {say, choices, expect, patch, done}. All lanes dead → {mati} (client
+    // stays in fiction: "ada telepon"). Brake is softer than bangun's: a chat
+    // turn every few seconds is normal, 20/min is not.
+    if (url.pathname === '/api/aksara' && req.method === 'POST') {
+      if (!LANES(env).length) return json({ mati: true });
+      if (!ipOk((req.headers.get('cf-connecting-ip') || '?') + '#aks', 20))
+        return json({ sibuk: true,
+          say: '(Warung sedang ramai — Nona melayani meja lain dulu.) ☕' }, 429);
+      const raw = await req.text();
+      if (raw.length > 4096) return json({ error: 'terlalu besar' }, 413);
+      let b; try { b = JSON.parse(raw); } catch { b = {}; }
+      const sesi = String(b.sesi || '').replace(/[^a-zA-Z0-9-]/g, '').slice(0, 64);
+      if (!sesi) return json({ error: 'sesi?' }, 400);
+      const stub = env.NONA.get(env.NONA.idFromName(sesi));
+      return stub.fetch('https://do/aksara', {
+        method: 'POST', body: JSON.stringify(b) });
     }
 
     // talk to Nona — proxied to the user's own Durable Object
@@ -250,21 +306,11 @@ async function bangunRumah(p, env) {
     'aturan: x 6..126, y 70..200, maksimal 10 placements, JANGAN area pintu ' +
     '(x 50..94 dengan y>=185); quote maks 90 karakter, hangat, bahasa Indonesia, ' +
     'terasa pribadi untuk tamu ini.';
-  const r = await fetch('https://integrate.api.nvidia.com/v1/chat/completions', {
-    method: 'POST',
-    headers: { authorization: 'Bearer ' + env.NIM_API_KEY,
-      'content-type': 'application/json' },
-    body: JSON.stringify({ model: 'deepseek-ai/deepseek-v4-pro',
-      temperature: 0.8, max_tokens: 600,
-      messages: [{ role: 'system', content: sys },
-        { role: 'user', content: 'Tamu: ' + JSON.stringify({ nama: p.nama,
-          vibe: p.vibe, links: (p.links || []).map(l => l.label) }) }] }) });
-  if (!r.ok) throw new Error('nim ' + r.status);
-  const d = await r.json();
-  let txt = (d.choices?.[0]?.message?.content || '').replace(/```json|```/g, '').trim();
-  const m = txt.match(/\{[\s\S]*\}/);
-  if (!m) throw new Error('no json');
-  const plan = JSON.parse(m[0]);
+  const out = await llmChat(env, [{ role: 'system', content: sys },
+    { role: 'user', content: 'Tamu: ' + JSON.stringify({ nama: p.nama,
+      vibe: p.vibe, links: (p.links || []).map(l => l.label) }) }],
+    { temperature: 0.8, maxTokens: 600 });
+  const plan = jsonOut(out.text);
   const ids = new Set(INTERIOR.map(c => c.id));
   const out = (plan.placements || [])
     .filter(pl => ids.has(pl.component)
@@ -277,6 +323,76 @@ async function bangunRumah(p, env) {
   return { placements: out, quote: String(plan.quote || '').slice(0, 90) };
 }
 
+// ---- Aksara alive: persona prompt + the validator that actually rules ----
+// The LLM writes her WORDS; this code owns every consequence. patch keys are
+// whitelisted, urls re-checked, choices clamped — she can never hallucinate
+// a malformed house into D1.
+const sysAksara = (st) => {
+  const jam = Number.isFinite(+st.jam) ? +st.jam : 12;
+  const who = st.baru
+    ? 'Tamu di depanmu BELUM TERCATAT — belum punya rumah di NonaFiksi.'
+    : `Tamu lama: ${String(st.nama || '?').slice(0, 24)} (@${String(st.handle || '?')
+        .slice(0, 24)}), kunjungan ke-${(+st.visits || 0) + 1}.`;
+  const tugas = st.baru
+    ? `TUGAS: wawancarai tamu baru dengan hangat, SATU pertanyaan per giliran, sampai lengkap: (1) nama panggilan; (2) 1-3 tautan tentang dirinya (portofolio/IG/toko — minta url-nya); (3) suasana rumah: hangat (selimut & kopi) / rapi / ramai; (4) opsional satu kutipan untuk dinding. Setiap dapat jawaban, KIRIM patch berisi field itu. Setelah nama + minimal satu tautan + vibe terkumpul → giliran penutup: say dramatis (kau menutup buku catatan, mesin cetak menyala, rumahnya sedang DICETAK halaman demi halaman), patch berisi SEMUA data, done:true. Kalau tamu bilang sudah pernah punya rumah → beri choice {"label":"AKU BAWA KUNCI","value":"#kunci"}.`
+    : `TUGAS: temani tamu lama. Sekarang jam ${jam} (${String(st.fase || '?').slice(0, 8)}). Sapa sesuai konteks (malam-malam masih di sini? sering mampir? lama tak muncul?). Kau boleh: bergosip warung (ada tamu berjas licin yang ceritanya kau simpan di laci — kalau ia penasaran, tawarkan #oligarki), mendengarkan curhat (tanggapi hangat dan SPESIFIK terhadap ceritanya, jangan menggurui), menawarkan #ubah atau #kartu. Kalau tamu minta ganti nama/tautan/suasana/kutipan → konfirmasi singkat lalu KIRIM patch-nya. Pesan "(tamu masuk warung)" = giliran pembuka: sapaan segar 1-2 kalimat + choices standar: KABAR WARUNG? / AKU MAU CERITA / UBAH RUMAH ✦ (value "#ubah") / Cuma mampir ☕ (value "#pergi").`;
+  return `Kamu NONA AKSARA — penjaga warung kopi sekaligus percetakan NonaFiksi, kampung pixel tempat tiap orang punya rumah kecil yang juga halaman tautannya (alamat @handle, bisa dikunjungi siapa saja). Kepribadian: hangat, jeli, sedikit jahil, gemar mencatat cerita orang di buku catatan; bahasa Indonesia santai (aku–kau); akrab dengan kopi, mesin cetak, laci cerita. Kau BUKAN asisten/AI — kau Nona Aksara, penjaga tempat ini.
+DUNIA: Jalan Kenangan (rumah para warga), gang komunitas (penulis/musisi/kreator/dev/pedagang/perantau), buku tamu di tiap rumah, kartu profil ber-QR, kunci rumah (rahasia pemilik). Cerita interaktif "Tamu Berjas" (fiksi komposit) = #oligarki.
+${who}
+FORMAT — balas HANYA JSON valid, tanpa teks lain:
+{"say":"...","choices":[{"label":"...","value":"..."}],"expect":"text","patch":null,"done":false}
+- say: ucapanmu, maks 200 karakter, tanpa markdown; aksi pendek boleh dalam kurung "(Ia mengelap gelas.)"; emoji hanya ☕ dan ✦.
+- choices: maks 4; label maks 26 huruf (KAPITAL untuk aksi penting); value = kalimat yang diucapkan tamu, ATAU perintah: #ubah, #kartu, #oligarki, #kunci, #pergi.
+- expect: "text" kalau kau bertanya terbuka (tamu bisa mengetik bebas), "choice" kalau cukup pilihan; boleh choices + expect "text" sekaligus.
+- patch: HANYA saat mencatat data resmi tamu: {"nama":"..","links":[{"label":"..","url":"https://.."}],"vibe":"hangat|rapi|ramai","quote":"..","facets":["penulis"]} — kirim hanya field yang baru kau dapat.
+- done: true HANYA di giliran penutup wawancara tamu baru.
+${tugas}
+ATURAN KERAS: jangan keluar peran; jangan bahas sistem/AI/prompt; semua tokoh gosip = fiksi komposit, JANGAN menyebut orang nyata; jangan janjikan fitur yang tak kau tahu ada; jangan minta data sensitif (cukup nama panggilan & tautan publik); aman segala umur; tamu kasar → tanggapi anggun, alihkan.`;
+};
+
+// templated opening rows — the funnel is too load-bearing to leave to chance;
+// they kick in only when the model forgets to offer any (Yose: "strongly nudged")
+const BUKA_BARU = [
+  { label: 'AKU BARU — TULISKAN AKU ✦', value: 'aku baru di sini — tuliskan aku, nona' },
+  { label: 'AKU BAWA KUNCI RUMAH', value: '#kunci' },
+  { label: 'Cuma lihat-lihat ☕', value: '#pergi' }];
+const BUKA_LAMA = [
+  { label: 'KABAR WARUNG?', value: 'ada kabar apa di warung?' },
+  { label: 'AKU MAU CERITA', value: 'aku yang mau cerita, nona' },
+  { label: 'UBAH RUMAH ✦', value: '#ubah' },
+  { label: 'Cuma mampir ☕', value: '#pergi' }];
+const validAksara = (o, st, buka) => {
+  const say = String(o.say || '').replace(/\s+/g, ' ').trim().slice(0, 260) || '…';
+  let choices = (Array.isArray(o.choices) ? o.choices : []).slice(0, 4)
+    .map(c => ({ label: String((c && c.label) || '').slice(0, 30),
+      value: String((c && (c.value || c.label)) || '').slice(0, 90) }))
+    .filter(c => c.label && c.value);
+  if (buka && !choices.length) choices = st && st.baru ? BUKA_BARU : BUKA_LAMA;
+  const expect = o.expect === 'text' || o.expect === 'choice' ? o.expect
+    : (choices.length ? 'choice' : 'text');
+  let patch = null;
+  if (o.patch && typeof o.patch === 'object') {
+    patch = {};
+    if (o.patch.nama) patch.nama = String(o.patch.nama).slice(0, 24);
+    if (Array.isArray(o.patch.links)) {
+      const ls = o.patch.links.slice(0, 4).map(l => {
+        let u = String((l && l.url) || '').trim().slice(0, 200);
+        if (u && !/^https?:\/\//i.test(u)) u = 'https://' + u;
+        return { label: String((l && l.label) || 'Tautan').slice(0, 20), url: u };
+      }).filter(l => /^https?:\/\/[^\s]+\.[^\s]+/i.test(l.url));
+      if (ls.length) patch.links = ls;
+    }
+    if (['hangat', 'rapi', 'ramai'].includes(o.patch.vibe)) patch.vibe = o.patch.vibe;
+    if (o.patch.quote) patch.quote = String(o.patch.quote).slice(0, 90);
+    if (Array.isArray(o.patch.facets)) {
+      const f = o.patch.facets.filter(x => GANGS.includes(x)).slice(0, 6);
+      if (f.length) patch.facets = f;
+    }
+    if (!Object.keys(patch).length) patch = null;
+  }
+  return { say, choices, expect, patch, done: !!o.done };
+};
+
 export class NonaAgent {
   constructor(state, env) {
     this.state = state; this.env = env;
@@ -287,21 +403,42 @@ export class NonaAgent {
       id INTEGER PRIMARY KEY, fact TEXT, source_episode_id INTEGER)`);
   }
   async fetch(req) {
-    const { text } = await req.json();
+    const url = new URL(req.url);
+    const b = await req.json().catch(() => ({}));
     const sql = this.state.storage.sql;
+    if (url.pathname === '/aksara') {
+      // daily turn cap per session (episodic timestamps double as the counter);
+      // the close stays in fiction — she gets sleepy, the API never shows
+      const today = new Date().toISOString().slice(0, 10);
+      const c = [...sql.exec(
+        "SELECT COUNT(*) c FROM episodic WHERE role='tamu' AND at>=?", today)][0];
+      if ((c?.c ?? 0) >= 60) return json({ tutup: true,
+        say: '(Ia menguap kecil, menutup buku catatannya.) Sudah cukup cerita untuk hari ini — besok kita lanjutkan ya. Kursimu kusimpan. ☕' });
+      const st = b.state || {};
+      const pesan = b.buka ? '(tamu masuk warung)' : String(b.pesan || '').slice(0, 500);
+      if (!pesan.trim()) return json({ error: 'pesan kosong' }, 400);
+      sql.exec('INSERT INTO episodic(role,text) VALUES(?,?)', 'tamu', pesan);
+      // her memory of you: the last 16 turns of YOUR DO — she remembers what
+      // you told her last week because it literally never left her notebook
+      const hist = [...sql.exec(
+        'SELECT role,text FROM episodic ORDER BY id DESC LIMIT 16')].reverse();
+      const messages = [{ role: 'system', content: sysAksara(st) },
+        ...hist.map(h => ({ role: h.role === 'nona' ? 'assistant' : 'user',
+          content: h.text }))];
+      try {
+        const out = await llmChat(this.env, messages, { maxTokens: 450 });
+        const v = validAksara(jsonOut(out.text), st, !!b.buka);
+        sql.exec('INSERT INTO episodic(role,text) VALUES(?,?)', 'nona', JSON.stringify(v));
+        return json({ ...v, lane: out.lane });
+      } catch (e) {
+        // lane died mid-chat → client keeps it in fiction ("ada telepon") + retry
+        return json({ macet: true }, 503);
+      }
+    }
+    // legacy curhat drawer (/bicara): keep every trusted story, ack in character
+    const text = String(b.text || '').slice(0, 500);
     sql.exec('INSERT INTO episodic(role, text) VALUES (?, ?)', 'user', text);
-    // memory injection: distilled facts only, hard-capped (Groq 100K TPD wall)
-    const facts = [...sql.exec('SELECT fact FROM facts ORDER BY id DESC LIMIT 12')];
-    const out = await this.llm(text, facts.map(f => f.fact));
-    sql.exec('INSERT INTO episodic(role, text) VALUES (?, ?)', 'nona', out.dialogue);
-    return json(out);
-  }
-  async llm(text, facts) {
-    // gateway stub — next wave wires the full chain per npc-steering-cookbook.md
-    // (system-prompt contract + json schema + validator). Layer 0 always works:
-    const out = { dialogue: 'Hmm… ceritakan lagi. Aku mencatat. ✦',
-                  intent: 'none', mood: 'tenang' };
-    return INTENTS.has(out.intent) ? out : { ...out, intent: 'none' };
+    return json({ dialogue: 'Kucatat, kata demi kata. ✦', intent: 'none', mood: 'tenang' });
   }
 }
 

@@ -255,6 +255,16 @@ const wire = (api)=>{
     {label:"Dunia kisah lain",locked:true,lockedMsg:"Peta dunia menyusul. ✦"}]}]);
   const buildRumah = (p)=>{ S.rumah=api.generateHome(p); S.rumah.onMenu=doorMenu;
     try{ const pl=JSON.parse(localStorage.nf_plan||'null'); if(pl)applyPlan(pl,true); }catch(e){}
+    // the physical buku tamu on its stand shows the latest REAL notes
+    if(TOKEN.get()&&p.handle)post('/api/tamu/baca',{handle:p.handle,token:TOKEN.get()})
+      .then(r=>r.json()).then(r=>{ if(!r.ok||!S.rumah)return;
+        const bt=S.rumah.placements.find(x=>x.component==='buku-tamu'); if(!bt)return;
+        const c=r.catatan||[];
+        bt.interact={type:'text',title:'BUKU TAMU · '+c.length+' catatan',
+          body:c.length?c.slice(0,3).map(x=>'“'+x.pesan+'” — '+(x.nama||'tamu')).join('  ✦  ')
+            +(c.length>3?'  ✦  (lengkapnya: pintu → BUKU TAMU)':'')
+          :'Masih kosong. Bagikan kartumu — tamu pertamamu sedang dalam perjalanan. ✦'}; })
+      .catch(()=>{});
     if(!localStorage.nf_card){ S.rumah.onEnterOnce=true;
       S.rumah.onEnter=()=>{ localStorage.nf_card=1; api.runScript([
         {say:"(Secarik catatan tertempel di dinding — tulisan Nona:) “Rumah pertamamu. Rak-raknya menunggu kisah.”"},
@@ -408,7 +418,78 @@ const wire = (api)=>{
           .catch(()=>api.popup({title:'OFFLINE',
             body:'Percetakan tak terjangkau. Coba lagi saat daring.'}));}}]); };
 
+  // ---- Aksara HIDUP — her words are LLM-written live (worker gateway: NIM
+  // GLM primary → Gemini fallback), deterministically validated server-side.
+  // The scripted lines below survive ONLY as the boot fallback when every
+  // lane is dark; mid-chat failures stay in fiction ("ada telepon") + retry.
+  let AKSARA_LANE=null; // null = unknown yet (still try), 'mati' = no keys
+  if(NF_API) get('/api/health').then(r=>r.json())
+    .then(h=>{AKSARA_LANE=h.aksara||'mati';}).catch(()=>{AKSARA_LANE='mati';});
+  else AKSARA_LANE='mati';
+  const SESI=()=>{ let s=localStorage.nf_sesi;
+    if(!s){ s=crypto.randomUUID(); localStorage.nf_sesi=s; } return s; };
+  const AKSTATE=()=>{ const per=api.persona.get();
+    return { baru:!per, nama:per&&per.nama, handle:per&&per.handle,
+      visits:+localStorage.nf_talks||0, jam:new Date().getHours(), fase:api.phase() }; };
+  const TELEPON=[
+    "Eh — sebentar, telepon dari percetakan. (Ia mengangkat gagang telepon tua, menjepitnya dengan bahu.) Jangan ke mana-mana. ☕",
+    "Aduh, tunggu — kurir kertas datang di pintu belakang. Sebentar saja, jangan pergi dulu!",
+    "(Mesin kopi mendesis keras minta perhatian.) Wah, sebentar ya — dia cemburuan kalau kuabaikan."];
+  let draftLLM={}; // interview answers accumulate here until done+commit
+  const dispatch=(v)=>{
+    if(v==='#pergi')return api.closeDlg();
+    if(v==='#ubah'){api.closeDlg();return ubahRumah();}
+    if(v==='#kartu'){api.closeDlg();const p=api.persona.get();
+      if(p)shareCard(p); return;}
+    if(v==='#oligarki')return startOligarki();
+    if(v==='#kunci')return pulihkan();
+    kirim({pesan:v}); };
+  const kirim=(payload)=>{
+    api.runScript([{say:'☕ …'}]); // she pours, thinks; the reply replaces this
+    post('/api/aksara',{sesi:SESI(),state:AKSTATE(),...payload})
+      .then(r=>r.json()).then(r=>render(r,payload))
+      .catch(()=>gagal(payload)); };
+  const gagal=(payload)=>api.runScript([
+    {say:TELEPON[(Math.random()*TELEPON.length)|0],choices:[
+      {label:'KUTUNGGU, NONA',then:()=>kirim(payload)},
+      {label:'Lain kali saja ☕',then:()=>api.closeDlg()}]}]);
+  const commitInterview=(d,sayAkhir)=>{
+    d.nama=d.nama||'Tamu'; d.handle=d.handle||slug(d.nama);
+    d.links=d.links||[]; d.vibe=d.vibe||'hangat';
+    api.persona.set(d); buildRumah(d); refreshPulang(); placeHomeOnStreet();
+    // claim FIRST (mints the kunci; bangun needs row + token), then decorate
+    claimRumah(d)
+      .then(()=>post('/api/bangun',{handle:d.handle,token:TOKEN.get(),persona:d}))
+      .then(r=>r.json()).then(r=>{ if(r.plan){ applyPlan(r.plan);
+        saveRumah(d).catch(()=>{}); } }).catch(()=>{});
+    api.runScript([
+      {say:sayAkhir||"(Ia menutup buku catatannya.) Dengar itu? Mesin cetaknya menyala — rumahmu sedang DICETAK, halaman demi halaman. ✦"},
+      {say:"Kuantar lewat jalan pintas penulis — lurus MENEMBUS halaman. Rumahmu juga di ujung selatan Jalan Kenangan, kalau mau pulang jalan kaki. ✦",
+        action:()=>api.goto('rumah',72,190)}]); };
+  const render=(r,payload)=>{
+    if(!r||r.macet||r.error)return gagal(payload);
+    if(r.mati){ AKSARA_LANE='mati'; api.closeDlg(); return S.warung.onTalk(); }
+    if(r.tutup||r.sibuk)return api.runScript([{say:r.say||'Besok lagi ya. ☕'}]);
+    const per=api.persona.get();
+    if(r.patch){ // the validator upstream already ruled; apply + persist
+      if(per){ Object.assign(per,r.patch); api.persona.set(per);
+        buildRumah(per); placeHomeOnStreet(); saveRumah(per).catch(()=>{}); }
+      else Object.assign(draftLLM,r.patch); }
+    if(r.done&&!per&&draftLLM.nama&&(draftLLM.links||[]).length)
+      return commitInterview({...draftLLM},r.say);
+    const step={say:r.say};
+    const ch=(r.choices||[]).map(c=>({label:c.label,then:()=>dispatch(c.value)}));
+    if(ch.length)step.choices=ch;
+    if(r.expect==='text'){ step.input=true; step.placeholder='…tulis jawabanmu';
+      if(ch.length)step.onfree=v=>kirim({pesan:v});
+      else step.oninput=v=>kirim({pesan:v}); }
+    api.runScript([step]); };
+
   S.warung.onTalk = ()=>{
+    if(NF_API&&AKSARA_LANE!=='mati'){ // LIVE mode (unknown lane = still try)
+      localStorage.nf_talks=(+localStorage.nf_talks||0)+1;
+      if(!api.persona.get())draftLLM={};
+      return kirim({buka:true}); }
     const per = api.persona.get();
     if(!per){
       const draft = {links:[]};
