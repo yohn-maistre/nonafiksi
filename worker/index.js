@@ -408,7 +408,10 @@ const BUKA_LAMA = [
   { label: 'UBAH RUMAH ✦', value: '#ubah' },
   { label: 'Cuma mampir ☕', value: '#pergi' }];
 const validAksara = (o, st, buka) => {
-  const say = String(o.say || '').replace(/\s+/g, ' ').trim().slice(0, 260) || '…';
+  const say = String(o.say || '')
+    .replace(/[\u{1F000}-\u{1FAFF}\u{FE0F}\u{2190}-\u{27BF}]/gu,
+      m => (m === '☕' || m === '✦' ? m : '')) // her voice: ink, not emoji soup
+    .replace(/\s+/g, ' ').trim().slice(0, 260) || '…';
   let choices = (Array.isArray(o.choices) ? o.choices : []).slice(0, 4)
     .map(c => ({ label: String((c && c.label) || '').slice(0, 30),
       value: String((c && (c.value || c.label)) || '').slice(0, 90) }))
