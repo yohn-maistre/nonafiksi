@@ -466,7 +466,7 @@ export class NonaAgent {
         return json({ ...v, lane: out.lane });
       } catch (e) {
         // lane died mid-chat → client keeps it in fiction ("ada telepon") + retry
-        return json({ macet: true }, 503);
+        return json({ macet: true, galat: b.debug ? String(e).slice(0, 200) : undefined }, 503);
       }
     }
     // legacy curhat drawer (/bicara): keep every trusted story, ack in character
