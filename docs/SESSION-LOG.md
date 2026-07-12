@@ -444,3 +444,63 @@ lib exists -> build ours (~200 lines); LPC generator CC-BY-SA/GPL + 64px
 wavefunctioncollapse (MIT) as optional agent-terrain brain; autotiling
 vanilla. Paid tail parked to needs-from-Yose: LimeZu $1.50 + Hana Caraka
 (Bagong Games, INDONESIAN-MADE) $4.99 ≈ $6.50 total.
+
+## 2026-07-13 (early AM) — AKSARA ALIVE (LLM-live conversations) + rumah v2
+
+**She speaks for herself now.** Yose's call: "no template outputs — everything
+LLM generated", immersive failures ("hold on, I got a call"), GLM 5.2 on NIM
+(his key landed; his ISP blocks NIM locally but the WORKER calls from
+Cloudflare's edge — verified working from prod).
+
+Worker (7 commits, all CI green, live-drilled):
+- **LLM gateway** `llmChat()`: lane ladder GLM-5.2 (12s probe window) →
+  qwen3-next-80b-a3b (35s) → gemini-2.5-flash (30s, when GOOGLE_API_KEY
+  lands) → llama-3.1-8b floor (12s). Per-lane 90s circuit breaker (a dead
+  queue never taxes every message); `<think>` stripped; all OpenAI-shaped.
+  LIVE-MEASURED 2026-07-13 peak: GLM 524s (free-tier queue), llama-70b 503
+  ResourceExhausted, qwen3-next ~17s/200tok, llama-8b 1.3s/200tok, gemma-3
+  end-of-life 410. GLM stays primary and reclaims the mic when its queue
+  clears.
+- **/api/aksara** → NonaAgent DO per sesi (nf_sesi uuid): episodic table =
+  her real memory (drilled: she recalled the interview items in a later
+  visit unprompted). Contract {say,choices[{label,value}],expect,patch,done}
+  with deterministic validator: say ≤260 + emoji scrub (only ☕ ✦ survive),
+  ≤4 choices, patch whitelist (nama/links-https/vibe/facets-GANGS/quote≤90),
+  templated opening rows as backstop (BUKA_BARU/BUKA_LAMA). choice values
+  can be #commands: #ubah #kartu #oligarki #kunci #pergi (client dispatches
+  locally). 60 turns/day per DO (in-fiction sleepy close), 20/min IP brake.
+- **/api/llm/ping** — per-lane health from the edge (?model= catalog probe,
+  ?max= real-generation timing, ms). This is how the queue truth was found.
+- /api/bangun swapped onto the same gateway (deepseek retired). /api/health
+  now reports `aksara: nim|gemini|mati`.
+- Full interview drilled via curl end-to-end: buka → nama patch ("namaku
+  Warsito, panggil saja Sito" → {nama:"Sito"}) → links+vibe patch → quote →
+  done:true with complete accumulated patch. Returning-player buka greets
+  by name with standard choices.
+
+Client (game.js): AKSARA_LANE health probe at boot; live mode = kirim/render
+loop (dialog steps built from her contract; expect:text ⇒ input, choices ⇒
+buttons, both coexist via onfree); draftLLM accumulates interview patches →
+commitInterview (claim → bangun → teleport, same path as before); returning
+patches apply+save instantly (she can rename you in conversation). Failure
+beats stay in fiction: TELEPON lines + retry; 2 strikes → she offers "PAKAI
+BUKU CATATAN SAJA" (scripted flow, honest). Scripted wawancara survives ONLY
+as boot-dark fallback.
+
+Rumah v2 (engine generateHome + 7 new MAPS + catalog): whole house reads in
+one glance (H224 < viewport, camY pinned). kasur-besar, lemari, meja-kerja
+(w/ kursi), rak-tautan ×4 (proper bookshelves w/ nameplates = links),
+jam-dinding, foto-string (polaroid wall, R2-wave teaser), buku-tamu on a
+stand — buildRumah fills it with the latest 3 REAL guest notes via
+/api/tamu/baca. New components are interior-tagged so Aksara's bangun
+designer can place them too.
+
+Gotcha logged: `node --check` on worker/index.js silently passes CommonJS
+parse; esbuild caught a duplicate const it missed. Drill now copies to .mjs
+first (memory updated).
+
+Open on Yose: GOOGLE_API_KEY repo secret (slots in above the 8b floor);
+phone playtest of the live interview; judge qwen's voice vs GLM's when the
+queue clears (swap order is one line). Next waves queued: street generator
+(per-viewer plots, warung-top grammar, y-culling, gapura + directional wipe
++ auto-open mouths), halaman decoration + kotak surat.
