@@ -306,11 +306,11 @@ async function bangunRumah(p, env) {
     'aturan: x 6..126, y 70..200, maksimal 10 placements, JANGAN area pintu ' +
     '(x 50..94 dengan y>=185); quote maks 90 karakter, hangat, bahasa Indonesia, ' +
     'terasa pribadi untuk tamu ini.';
-  const out = await llmChat(env, [{ role: 'system', content: sys },
+  const res = await llmChat(env, [{ role: 'system', content: sys },
     { role: 'user', content: 'Tamu: ' + JSON.stringify({ nama: p.nama,
       vibe: p.vibe, links: (p.links || []).map(l => l.label) }) }],
     { temperature: 0.8, maxTokens: 600 });
-  const plan = jsonOut(out.text);
+  const plan = jsonOut(res.text);
   const ids = new Set(INTERIOR.map(c => c.id));
   const out = (plan.placements || [])
     .filter(pl => ids.has(pl.component)
