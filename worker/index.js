@@ -40,12 +40,16 @@ const LANES = (env) => [
     url: 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',
     key: env.GOOGLE_API_KEY, model: 'gemini-2.5-flash' },
 ].filter(Boolean);
+// circuit breaker (per-isolate): a lane that just failed rests 90s so a dead
+// NIM queue doesn't tax every message with a full timeout before the fallback
+const DOWN = new Map();
 async function llmChat(env, messages, opts = {}) {
   let err = new Error('tanpa kunci');
   for (const L of LANES(env)) {
+    if ((DOWN.get(L.lane) || 0) > Date.now()) { err = new Error(L.lane + ' istirahat'); continue; }
     try {
       const ctl = new AbortController();
-      const tid = setTimeout(() => ctl.abort('lambat'), opts.timeoutMs || 25000);
+      const tid = setTimeout(() => ctl.abort('lambat'), opts.timeoutMs || 18000);
       const r = await fetch(L.url, { method: 'POST', signal: ctl.signal,
         headers: { authorization: 'Bearer ' + L.key, 'content-type': 'application/json' },
         body: JSON.stringify({ model: L.model, temperature: opts.temperature ?? 0.85,
@@ -56,8 +60,9 @@ async function llmChat(env, messages, opts = {}) {
       const txt = String(d.choices?.[0]?.message?.content || '')
         .replace(/<think>[\s\S]*?<\/think>/g, '').trim();
       if (!txt) throw new Error(L.lane + ' kosong');
+      DOWN.delete(L.lane);
       return { text: txt, lane: L.lane };
-    } catch (e) { err = e; }
+    } catch (e) { DOWN.set(L.lane, Date.now() + 90000); err = e; }
   }
   throw err;
 }
@@ -268,17 +273,19 @@ export default {
     if (url.pathname === '/api/llm/ping') {
       if (!ipOk((req.headers.get('cf-connecting-ip') || '?') + '#ping', 3))
         return json({ error: 'pelan-pelan' }, 429);
+      const mo = (url.searchParams.get('model') || '').slice(0, 64); // NIM catalog probe
       const out = [];
       for (const L of LANES(env)) {
+        const model = (L.lane === 'nim' && mo) ? mo : L.model;
         try {
           const r = await fetch(L.url, { method: 'POST',
             headers: { authorization: 'Bearer ' + L.key, 'content-type': 'application/json' },
-            body: JSON.stringify({ model: L.model, max_tokens: 10,
+            body: JSON.stringify({ model, max_tokens: 10,
               messages: [{ role: 'user', content: 'Balas satu kata: halo' }] }) });
           const body = (await r.text()).slice(0, 220);
-          out.push({ lane: L.lane, model: L.model, status: r.status,
+          out.push({ lane: L.lane, model, status: r.status,
             ok: r.ok, cuplikan: r.ok ? undefined : body });
-        } catch (e) { out.push({ lane: L.lane, model: L.model, gagal: String(e) }); }
+        } catch (e) { out.push({ lane: L.lane, model, gagal: String(e) }); }
       }
       return json({ lanes: out.length ? out : 'tanpa kunci' });
     }
