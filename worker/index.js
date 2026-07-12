@@ -262,6 +262,27 @@ export default {
       return plan ? json({ plan }) : json({ fallback: true, reason: 'mesin cetak tersedak' });
     }
 
+    // lane diagnostics: which LLM lanes are alive, seen FROM Cloudflare's edge
+    // (Yose's ISP blocks NIM; this answers "does prod see it?"). Tiny prompt,
+    // hard brake — it exists for humans debugging, not traffic.
+    if (url.pathname === '/api/llm/ping') {
+      if (!ipOk((req.headers.get('cf-connecting-ip') || '?') + '#ping', 3))
+        return json({ error: 'pelan-pelan' }, 429);
+      const out = [];
+      for (const L of LANES(env)) {
+        try {
+          const r = await fetch(L.url, { method: 'POST',
+            headers: { authorization: 'Bearer ' + L.key, 'content-type': 'application/json' },
+            body: JSON.stringify({ model: L.model, max_tokens: 10,
+              messages: [{ role: 'user', content: 'Balas satu kata: halo' }] }) });
+          const body = (await r.text()).slice(0, 220);
+          out.push({ lane: L.lane, model: L.model, status: r.status,
+            ok: r.ok, cuplikan: r.ok ? undefined : body });
+        } catch (e) { out.push({ lane: L.lane, model: L.model, gagal: String(e) }); }
+      }
+      return json({ lanes: out.length ? out : 'tanpa kunci' });
+    }
+
     // aksara: the LIVE conversation — one DO per session (the DO is her memory
     // of you). Body: {sesi, pesan?|buka?, state}. Reply: validated contract
     // {say, choices, expect, patch, done}. All lanes dead → {mati} (client
