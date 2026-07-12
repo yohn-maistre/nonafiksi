@@ -139,11 +139,11 @@
    },
    {
     "component": "papan",
-    "x": 0,
-    "y": 58,
+    "x": 120,
+    "y": 244,
     "interact": {
-     "title": "PETA GANG",
-     "body": "Satu jalan, banyak lorong: penulis, musisi, kreator, dev, pedagang, perantau. Berdirilah di sini dan pilih ✦ PETA GANG."
+     "title": "SIMPANG GANG",
+     "body": "Lorong-lorong bercabang dari simpang ini: penulis, musisi, kreator, dev, pedagang, perantau. Masuki mulut gang di kiri atau kanan jalan."
     }
    }
   ],
@@ -444,6 +444,10 @@
     "sx": 72,
     "sy": 190
    }
+  ],
+  "crossPath": [
+   214,
+   26
   ]
  },
  "warung": {

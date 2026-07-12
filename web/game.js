@@ -220,14 +220,18 @@ const wire = (api)=>{
           if(t.aktif)S.street.fx.push({type:'glowFlicker',tetangga:1,
             x:pl.hx+32,y:pl.hy+34,r:18,a:.16}); }); })
       .catch(()=>{}); };
-  const gangMenu = ()=>api.runScript([{say:"Peta gang tertempel di tiang. Jalan-jalan ini sebenarnya satu jalan — yang berganti adalah TETANGGANYA. Mau menyusuri yang mana?",choices:[
-      ...GANGS.map(g=>({label:g[1],then:()=>{api.closeDlg();jalanRefresh(g[0]);
-        api.popup({title:g[1],body:'Rumah-rumah di lorong ini milik para '+g[0]+
-          ' yang mendaftarkan diri. Ketuk pintunya — yang lampunya menyala sedang ada di rumah. ✦'});}})),
-      {label:'GANG ACAK ✦ siapa saja',then:()=>{api.closeDlg();jalanRefresh('acak');
-        api.popup({title:'GANG ACAK',body:'Lorong tanpa peta. Tetangga hari ini: kejutan. ✦'});}},
-      {label:'◂ JALAN KENANGAN (pulang)',then:()=>{api.closeDlg();jalanRefresh('');}}]}],
-    'PETA GANG');
+  const masukGang = (gang,judul,pesan)=>{ api.closeDlg(); jalanRefresh(gang);
+    api.goto('street',72,227); // fade through the gang mouth, resurface at the simpang
+    setTimeout(()=>api.popup({title:judul,body:pesan}),340); };
+  const gangMenu = ()=>api.runScript([{say:"Kau berdiri di simpang. Lorong-lorong gang bercabang dari sini — jalannya sama, TETANGGANYA yang berganti. Mau menyusuri gang mana?",choices:[
+      ...GANGS.map(g=>({label:g[1],then:()=>masukGang(g[0],g[1],
+        'Rumah-rumah di lorong ini milik para '+g[0]+
+        ' yang mendaftarkan diri. Ketuk pintunya — yang lampunya menyala sedang ada di rumah. ✦')})),
+      {label:'GANG ACAK ✦ siapa saja',then:()=>masukGang('acak','GANG ACAK',
+        'Lorong tanpa peta. Tetangga hari ini: kejutan. ✦')},
+      {label:'◂ JALAN KENANGAN (pulang)',then:()=>masukGang('','JALAN KENANGAN',
+        'Kembali ke jalanmu sendiri. ✦')}]}],
+    'SIMPANG GANG');
   S.street.onMenu=(ex)=>{ if(!ex)return;
     if(ex.id==='petagang')return gangMenu();
     if(!ex.tg)return; const t=ex.tg;
@@ -235,7 +239,10 @@ const wire = (api)=>{
       (t.aktif?". Lampunya menyala.":". Sedang hening.")+" Ketuk pintunya?",choices:[
       {label:"MASUK ✦",then:()=>kunjungi(t,ex.door)},
       {label:"Lewat saja",then:()=>api.closeDlg()}]}],'JALAN KENANGAN'); };
-  S.street.exits.push({x:8,y:88,w:28,h:14,label:'✦ PETA GANG',menu:true,id:'petagang'});
+  // gang mouths at both edges of the simpang crossroad (crossPath y214-240)
+  S.street.exits.push(
+    {x:0,y:214,w:12,h:26,label:'✦ MULUT GANG',menu:true,id:'petagang'},
+    {x:132,y:214,w:12,h:26,label:'✦ MULUT GANG',menu:true,id:'petagang'});
 
   const doorMenu = ()=>api.runScript([{say:"Mau ke mana?",choices:[
     {label:"Jalan Kenangan",then:()=>{api.closeDlg();api.goto('street',72,618);}},

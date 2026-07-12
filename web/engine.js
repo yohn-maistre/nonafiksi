@@ -181,7 +181,12 @@ const GROUNDS = {
    const p=sc.path||[40,64]; rect(G.path,p[0],0,p[1],sc.H);
    for(let y=0;y<sc.H;y+=6)for(let x=p[0]+2;x<p[0]+p[1]-2;x+=6){
      if(rnd(x,y)>.86)rect(G.fleck,x,y,3,1);
-     if(rnd(x+1,y)>.9)rect('rgba(0,0,0,.12)',x+3,y+3,2,1); } },
+     if(rnd(x+1,y)>.9)rect('rgba(0,0,0,.12)',x+3,y+3,2,1); }
+   if(sc.crossPath){ const c=sc.crossPath; // simpang: gangs branch off sideways
+     rect(G.path,0,c[0],sc.W,c[1]);
+     for(let y=c[0]+2;y<c[0]+c[1]-2;y+=6)for(let x=0;x<sc.W;x+=6){
+       if(rnd(x,y)>.86)rect(G.fleck,x,y,3,1);
+       if(rnd(x+1,y)>.9)rect('rgba(0,0,0,.12)',x+3,y+3,2,1); } } },
  interior(sc,t){ const wh=sc.wallH||56, G=GROUND_PAL[phase()];
    rect(G.wall,0,0,sc.W,wh);
    for(let y=12;y<wh;y+=14)rect(G.seam,0,y,sc.W,1);
