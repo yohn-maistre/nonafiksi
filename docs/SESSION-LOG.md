@@ -3,6 +3,17 @@
 Written for a reader with amnesia. Each entry: what happened, what's true
 now, what's next.
 
+## 2026-07-12 — simpang gang: the crossroads makes the mechanic spatial
+
+Yose playtest verdict: PETA GANG zone by the warung was invisible/confusing.
+Replaced with a **simpang**: horizontal crossroad band mid-street (engine
+crossPath in GROUNDS.street, y214-240 — the horizontal-patrol NPC now walks
+it), **MULUT GANG exits at both edges**, papan SIMPANG GANG signage at the
+corner. Choosing a gang fades through the mouth and resurfaces at the simpang
+with new tetangga. Future ladder when gangs have enough residents: each mouth
+becomes a real side-scene (pocket streets per gang, then the RT segments of
+the garis-minat design).
+
 ## 2026-07-11 (night) — v0.8.1: gang facets LIVE, /@ page = the card, BONGKAR RUMAH
 
 Yose playtested v0.8 live (his QR scanned, /@yose renders, kunci flow held) and
