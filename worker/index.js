@@ -32,17 +32,19 @@ const ipOk = (ip, cap) => {
 // ---- LLM gateway: NIM (GLM) primary → Gemini fallback. Both speak the
 // OpenAI chat shape, so a lane swap is just url+model+key. When every lane
 // is dead the CALLER decides the fiction — never a silent template swap.
+// tms = per-lane patience: GLM's free-tier queue 524s at peak (live-verified
+// 2026-07-13) and a hot queue never answers fast, so it gets a short probe
+// window; the workhorse lanes get room to actually generate.
 const LANES = (env) => [
-  env.NIM_API_KEY && { lane: 'nim',
+  env.NIM_API_KEY && { lane: 'nim', tms: 12000,
     url: 'https://integrate.api.nvidia.com/v1/chat/completions',
     key: env.NIM_API_KEY, model: 'z-ai/glm-5.2' },
-  // GLM-5.2's free-tier queue 524s at peak (live-verified 2026-07-13); this
-  // fast NIM lane keeps her alive on the same key — GLM reclaims the mic the
-  // moment its queue clears (breaker re-probes every 90s)
-  env.NIM_API_KEY && { lane: 'nim-cepat',
+  // fast NIM lane on the same key — GLM reclaims the mic the moment its
+  // queue clears (breaker re-probes every 90s)
+  env.NIM_API_KEY && { lane: 'nim-cepat', tms: 40000,
     url: 'https://integrate.api.nvidia.com/v1/chat/completions',
     key: env.NIM_API_KEY, model: 'meta/llama-3.3-70b-instruct' },
-  env.GOOGLE_API_KEY && { lane: 'gemini',
+  env.GOOGLE_API_KEY && { lane: 'gemini', tms: 30000,
     url: 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',
     key: env.GOOGLE_API_KEY, model: 'gemini-2.5-flash' },
 ].filter(Boolean);
@@ -55,7 +57,7 @@ async function llmChat(env, messages, opts = {}) {
     if ((DOWN.get(L.lane) || 0) > Date.now()) { err = new Error(L.lane + ' istirahat'); continue; }
     try {
       const ctl = new AbortController();
-      const tid = setTimeout(() => ctl.abort('lambat'), opts.timeoutMs || 18000);
+      const tid = setTimeout(() => ctl.abort('lambat'), opts.timeoutMs || L.tms || 18000);
       const r = await fetch(L.url, { method: 'POST', signal: ctl.signal,
         headers: { authorization: 'Bearer ' + L.key, 'content-type': 'application/json' },
         body: JSON.stringify({ model: L.model, temperature: opts.temperature ?? 0.85,
@@ -460,7 +462,7 @@ export class NonaAgent {
         ...hist.map(h => ({ role: h.role === 'nona' ? 'assistant' : 'user',
           content: h.text }))];
       try {
-        const out = await llmChat(this.env, messages, { maxTokens: 450 });
+        const out = await llmChat(this.env, messages, { maxTokens: 320 });
         const v = validAksara(jsonOut(out.text), st, !!b.buka);
         sql.exec('INSERT INTO episodic(role,text) VALUES(?,?)', 'nona', JSON.stringify(v));
         return json({ ...v, lane: out.lane });
