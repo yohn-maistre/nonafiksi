@@ -282,18 +282,24 @@ export default {
       if (!ipOk((req.headers.get('cf-connecting-ip') || '?') + '#ping', 3))
         return json({ error: 'pelan-pelan' }, 429);
       const mo = (url.searchParams.get('model') || '').slice(0, 64); // NIM catalog probe
+      const mx = Math.min(400, +url.searchParams.get('max') || 10); // real-sized gen test
       const out = [];
       for (const L of LANES(env)) {
-        const model = (L.lane === 'nim' && mo) ? mo : L.model;
+        if (mo && L.lane === 'gemini') continue; // model probes target NIM only
+        const model = (L.lane !== 'gemini' && mo) ? mo : L.model;
+        if (out.some(o => o.model === model)) continue;
+        const t0 = Date.now();
         try {
           const r = await fetch(L.url, { method: 'POST',
             headers: { authorization: 'Bearer ' + L.key, 'content-type': 'application/json' },
-            body: JSON.stringify({ model, max_tokens: 10,
-              messages: [{ role: 'user', content: 'Balas satu kata: halo' }] }) });
+            body: JSON.stringify({ model, max_tokens: mx,
+              messages: [{ role: 'user', content: mx > 10
+                ? 'Ceritakan sebuah warung kopi di kampung dalam bahasa Indonesia, sekitar 150 kata.'
+                : 'Balas satu kata: halo' }] }) });
           const body = (await r.text()).slice(0, 220);
-          out.push({ lane: L.lane, model, status: r.status,
+          out.push({ lane: L.lane, model, status: r.status, ms: Date.now() - t0,
             ok: r.ok, cuplikan: r.ok ? undefined : body });
-        } catch (e) { out.push({ lane: L.lane, model, gagal: String(e) }); }
+        } catch (e) { out.push({ lane: L.lane, model, ms: Date.now() - t0, gagal: String(e) }); }
       }
       return json({ lanes: out.length ? out : 'tanpa kunci' });
     }
