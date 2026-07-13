@@ -13,6 +13,13 @@ const GANGS = ['penulis', 'musisi', 'kreator', 'dev', 'pedagang', 'perantau'];
 const facetsCol = (p) => { const f = ((p || {}).facets || [])
   .filter(x => GANGS.includes(x)).slice(0, 6);
   return f.length ? ',' + f.join(',') + ',' : ''; };
+// halaman (front-yard) whitelist: catalog 'halaman' tag + a few reusable props
+const HAL_OK = new Set([...Object.entries(CATALOG)
+  .filter(([, c]) => (c.tags || []).includes('halaman')).map(([k]) => k),
+  'kucing', 'tanaman', 'batu']);
+const sanitizeHalaman = (p) => { if (!p || typeof p !== 'object') return;
+  const h = Array.isArray(p.halaman) ? p.halaman.filter(x => HAL_OK.has(x)).slice(0, 6) : null;
+  if (h && h.length) p.halaman = h; else delete p.halaman; };
 
 const sha256hex = async (s) => {
   const d = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s));
@@ -147,6 +154,7 @@ export default {
     if (url.pathname === '/api/rumah' && req.method === 'POST') {
       const b = await req.json().catch(() => null);
       if (!b || !HANDLE.test(b.handle || '')) return json({ error: 'handle tidak sah' }, 400);
+      sanitizeHalaman(b.persona);
       const persona = JSON.stringify(b.persona || {});
       const manifest = JSON.stringify(b.manifest || {});
       if (persona.length > 2048 || manifest.length > 32768)

@@ -172,6 +172,24 @@ const wire = (api)=>{
               i<0?p.facets.push(g[0]):p.facets.splice(i,1); fmenu();}})),
           {label:'SIMPAN ✦',then:commit},
           {label:'◂ BATAL',then:ubahRumah}]}],'PETA GANG'); fmenu(); }},
+      {label:"HALAMAN ✦ hias pekarangan",then:()=>{ p.halaman=(p.halaman||[]).filter(Boolean);
+        const commitHal=()=>{ api.persona.set(p); placeHomeOnStreet(); saveRumah(p).catch(()=>{});
+          api.runScript([{say:"Pekaranganmu kuatur ulang — lihatlah saat kau keluar ke jalan. ✦",
+            action:()=>api.closeDlg()}]); };
+        const pick=(then)=>{ const ch=HAL_PALETTE.map(o=>({label:o.label,then:()=>then(o.id)}));
+          ch.push({label:'◂ BATAL',then:halMenu});
+          api.runScript([{say:"Taruh apa di pekarangan?",choices:ch}],'HALAMAN'); };
+        const editSlot=(i)=>api.runScript([{say:'“'+((HAL_PALETTE.find(x=>x.id===p.halaman[i])||{}).label||'?')+'” — mau diapakan?',choices:[
+          {label:'GANTI',then:()=>pick(id=>{p.halaman[i]=id;halMenu();})},
+          {label:'✕ AMBIL',then:()=>{p.halaman.splice(i,1);halMenu();}},
+          {label:'◂ BATAL',then:halMenu}]}],'HALAMAN');
+        const halMenu=()=>{ const ch=p.halaman.map((id,i)=>({
+            label:'✎ '+((HAL_PALETTE.find(x=>x.id===id)||{}).label||id),then:()=>editSlot(i)}));
+          if(p.halaman.length<HALAMAN_SLOTS.length)
+            ch.push({label:'+ TARUH SESUATU',then:()=>pick(id=>{p.halaman.push(id);halMenu();})});
+          ch.push({label:'SIMPAN ✦',then:commitHal},{label:'◂ KEMBALI',then:ubahRumah});
+          api.runScript([{say:"Pekarangan rumahmu ("+p.halaman.length+"/"+HALAMAN_SLOTS.length+" petak). Atur isinya:",choices:ch}],'HALAMAN'); };
+        halMenu(); }},
       {label:"BONGKAR RUMAH ⚠",then:()=>api.runScript([
         {say:"Membongkar rumah = MENGHAPUS SEMUANYA dari percetakan: @"+p.handle+", tautan, buku tamu, kuncinya. Tidak bisa dibatalkan. Kau yakin?",choices:[
           {label:"BONGKAR. AKU YAKIN.",then:()=>api.runScript([
@@ -312,14 +330,28 @@ const wire = (api)=>{
   const refreshPulang = ()=>{ if(api.persona.get()) delete pulang.locked;
     else pulang.locked='Rumahmu belum dibangun. Bicaralah dengan Nona di warung. ✦'; };
   // the south-end house is always there (a street has houses); the sign says
-  // whose it is — or that the kavling waits.
+  // whose it is — or that the kavling waits. Around it: the resident's halaman.
+  const HALAMAN_SLOTS=[[112,592],[12,592],[112,566],[12,566],[112,540],[12,540]];
+  const HAL_PALETTE=[
+    {id:'pagar',label:'Pagar kayu'},{id:'pot-bunga',label:'Pot bunga'},
+    {id:'bangku',label:'Bangku teras'},{id:'kotak-surat',label:'Kotak surat'},
+    {id:'tiang-bendera',label:'Tiang bendera'},{id:'tanaman',label:'Tanaman'},
+    {id:'batu',label:'Batu hias'},{id:'kucing',label:'Kucing'}];
   const placeHomeOnStreet = ()=>{ const per=api.persona.get();
     const sign=S.street.placements.find(p=>p.component==='papan'&&p.y>500);
     if(sign) sign.interact = per
       ? {title:'RUMAH '+(per.nama||'').toUpperCase().slice(0,14),
          body:'@'+per.handle+' — pintumu sendiri, di ujung Jalan Kenangan.'}
       : {title:'KAVLING KOSONG',
-         body:'Rumah ini menunggu pemiliknya. Bicaralah dengan Nona di warung. ✦'}; };
+         body:'Rumah ini menunggu pemiliknya. Bicaralah dengan Nona di warung. ✦'};
+    // halaman: the resident's yard pieces beside their house (re-injected each call)
+    S.street.placements=S.street.placements.filter(p=>!p._hal);
+    if(per&&Array.isArray(per.halaman)) per.halaman.filter(Boolean).forEach((t,i)=>{
+      const c=NF_CATALOG[t]; if(!c||i>=HALAMAN_SLOTS.length)return;
+      const s=HALAMAN_SLOTS[i], pl={component:t,x:s[0],y:s[1],_hal:true};
+      if(t==='kotak-surat')pl.interact={type:'text',title:'KOTAK SURAT ✦',
+        body:'Kotak suratmu. Tetangga menitip salam di buku tamu — baca lewat pintu rumah → BUKU TAMU. ✦'};
+      S.street.placements.push(pl); }); };
   const p0 = api.persona.get();
   if(p0&&!p0.handle){ p0.handle=slug(p0.nama); api.persona.set(p0); } // v05 saves
   if(p0) buildRumah(p0);
@@ -486,6 +518,7 @@ const wire = (api)=>{
   const commitInterview=(d,sayAkhir)=>{
     d.nama=d.nama||'Tamu'; d.handle=d.handle||slug(d.nama);
     d.links=d.links||[]; d.vibe=d.vibe||'hangat';
+    d.halaman=d.halaman||['kotak-surat','pot-bunga']; // a yard that greets you
     api.persona.set(d); buildRumah(d); refreshPulang(); placeHomeOnStreet();
     // claim FIRST (mints the kunci; bangun needs row + token), then decorate
     claimRumah(d)

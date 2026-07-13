@@ -533,5 +533,52 @@
    "title": "Buku Tamu",
    "body": "Halaman-halamannya menunggu salam. Tamu menulis lewat pintu — menu BUKU TAMU."
   }
+ },
+ "pagar": {
+  "custom": "pagar",
+  "w": 16,
+  "h": 5,
+  "flat": true,
+  "tags": [
+   "halaman"
+  ]
+ },
+ "pot-bunga": {
+  "custom": "potBunga",
+  "w": 8,
+  "h": 6,
+  "tags": [
+   "halaman",
+   "nature"
+  ]
+ },
+ "bangku": {
+  "custom": "bangku",
+  "w": 10,
+  "h": 4,
+  "tags": [
+   "halaman"
+  ],
+  "interact": {
+   "type": "text",
+   "title": "Bangku Teras",
+   "body": "Tempat duduk menghadap jalan. Sore-sore, tetangga suka mampir dan bercerita di sini."
+  }
+ },
+ "kotak-surat": {
+  "custom": "kotakSurat",
+  "w": 7,
+  "h": 8,
+  "tags": [
+   "halaman"
+  ]
+ },
+ "tiang-bendera": {
+  "custom": "tiangBendera",
+  "w": 5,
+  "h": 8,
+  "tags": [
+   "halaman"
+  ]
  }
 }

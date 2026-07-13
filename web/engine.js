@@ -141,7 +141,14 @@ const MAPS = {
   'K..cccc....cccc.....cccc....cccc.......K',
   'K..cccc....cccc.....cccc....cccc.......K'],
  bukuTamu: ['.cccccccccc.','.ciiicciiic.','.cccccccccc.','.ciiccciicc.',
-  '.cccccccccc.','.xxxxxxxxxx.','....xxxx....','...xxxxxx...']
+  '.cccccccccc.','.xxxxxxxxxx.','....xxxx....','...xxxxxx...'],
+ // ---- halaman: front-yard pieces the resident places outside their house ----
+ pagar: ['w.w.w.w.w.w.w.w.','wwwwwwwwwwwwwwww','w.w.w.w.w.w.w.w.',
+  'wwwwwwwwwwwwwwww','w.w.w.w.w.w.w.w.'],
+ potBunga: ['..g.g...','.gdgdg..','..ddd...','.tttt...','.tttt...','..tt....'],
+ bangku: ['WWWWWWWWWW','wwwwwwwwww','.W......W.','.W......W.'],
+ kotakSurat: ['.ttttt.','ttttttt','tcCCCct','ttttttt','..w.i..','..w.i..','..w....','..w....'],
+ tiangBendera: ['wmmmm','wmmmm','wcccc','wcccc','w....','w....','w....','w....']
 };
 function spr(map, pal) { pal = pal || PAL;
   const w = Math.max(...map.map(r=>r.length)), h = map.length,
