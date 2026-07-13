@@ -2064,25 +2064,39 @@ const wire = (api)=>{
       {say:sayAkhir||"(Ia menutup buku catatannya.) Dengar itu? Mesin cetaknya menyala — rumahmu sedang DICETAK, halaman demi halaman. ✦"},
       {say:"Kuantar lewat jalan pintas penulis — lurus MENEMBUS halaman. Rumahmu juga di ujung selatan Jalan Kenangan, kalau mau pulang jalan kaki. ✦",
         action:()=>api.goto('rumah',72,190)}]); };
-  // Onboarding is a fixed funnel; the CLIENT owns the buttons (the model only
-  // writes her line + a patch). This kills the "example-answer-as-a-button" bug
-  // AND speeds turns up (she generates a sentence, not a menu). ivPhase = what
-  // she is asking for on THIS turn; ivSend advances it before the next call.
+  // Onboarding is a fixed funnel; the CLIENT owns the buttons AND captures the
+  // data (the model's patch is a refinement, not a requirement — a weak fallback
+  // lane that returns patch:null still can't lose your name). This also kills
+  // the "example-answer-as-a-button" bug and speeds turns (she writes a line,
+  // not a menu). ivPhase = what she is asking for THIS turn.
+  const cleanName=(v)=>{ const s=String(v).trim()
+    .replace(/^(halo[,!.\s]+)?(nama\s?(ku|\s?saya)?|panggil(\s?aku|\s?saja)?|aku|saya)\s+/i,'')
+    .replace(/[.!,]+$/,'').trim();
+    return (s||String(v).trim()).slice(0,24); };
+  const normURL=(v)=>{ let u=String(v).trim(); if(!u)return '';
+    if(!/^https?:\/\//i.test(u))u='https://'+u.replace(/^\/+/,''); return u.slice(0,200); };
+  const labelFor=(u)=>{ try{ const h=new URL(u).hostname.replace(/^www\./,'');
+    if(/instagram/.test(h))return 'Instagram'; if(/tiktok/.test(h))return 'TikTok';
+    if(/(^|\.)x\.com|twitter/.test(h))return 'X'; if(/youtu/.test(h))return 'YouTube';
+    if(/github/.test(h))return 'GitHub'; if(/linkedin/.test(h))return 'LinkedIn';
+    if(/spotify/.test(h))return 'Spotify';
+    return h.split('.')[0].replace(/^\w/,c=>c.toUpperCase()); }catch(e){return 'Tautan';} };
   const ivSend=(pesan,next)=>{ ivPhase=next; kirim({pesan}); };
   const ivVibe=(v)=>{ draftLLM.vibe=v; ivSend('rumahku '+v,'quote'); };
   const ivAffordance=(step)=>{
     if(ivPhase==='nama'){ step.input=true; step.placeholder='namamu…';
-      step.onfree=v=>ivSend(v,'link');
+      step.onfree=v=>{ draftLLM.nama=cleanName(v); ivSend(v,'link'); };
       step.choices=[{label:'AKU SUDAH PUNYA RUMAH ✦',then:()=>{api.closeDlg();pulihkan();}}]; }
     else if(ivPhase==='link'){ step.input=true; step.placeholder='https://…  (IG, toko, dst)';
-      step.onfree=v=>ivSend(v,'vibe');
+      step.onfree=v=>{ const u=normURL(v); if(u)draftLLM.links=[{label:labelFor(u),url:u}];
+        ivSend(v,'vibe'); };
       step.choices=[{label:'BELUM ADA — LEWATI ✦',then:()=>ivSend('aku belum punya tautan','vibe')}]; }
     else if(ivPhase==='vibe'){ step.choices=[
       {label:'HANGAT — selimut & kopi',then:()=>ivVibe('hangat')},
       {label:'RAPI — semua pada tempatnya',then:()=>ivVibe('rapi')},
       {label:'RAMAI — tamu & tanaman',then:()=>ivVibe('ramai')}]; }
     else if(ivPhase==='quote'){ step.input=true; step.placeholder='kutipan dinding…';
-      step.onfree=v=>ivSend(v,'penutup');
+      step.onfree=v=>{ draftLLM.quote=String(v).slice(0,90); ivSend(v,'penutup'); };
       step.choices=[{label:'BIAR NONA YANG PILIH ✦',then:()=>ivSend('biar kamu yang pilih kutipannya','penutup')}]; }
   };
   const render=(r,payload)=>{
