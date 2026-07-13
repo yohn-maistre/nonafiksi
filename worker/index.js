@@ -94,9 +94,33 @@ async function llmChat(env, messages, opts = {}) {
   }
   throw err;
 }
+// Robust JSON extraction: models sometimes wrap the object in prose or (when
+// max_tokens clips them) leave it truncated mid-array. Walk to the balanced
+// close if there is one; otherwise repair by closing the open string/brackets.
 const jsonOut = (txt) => {
-  const m = String(txt).replace(/```json|```/g, '').match(/\{[\s\S]*\}/);
-  if (!m) throw new Error('no json'); return JSON.parse(m[0]); };
+  let s = String(txt).replace(/```json|```/g, '');
+  const i = s.indexOf('{');
+  if (i < 0) throw new Error('no json');
+  s = s.slice(i);
+  const stack = []; let inStr = false, esc = false, end = -1;
+  for (let j = 0; j < s.length; j++) {
+    const c = s[j];
+    if (esc) { esc = false; continue; }
+    if (c === '\\' && inStr) { esc = true; continue; }
+    if (c === '"') { inStr = !inStr; continue; }
+    if (inStr) continue;
+    if (c === '{' || c === '[') stack.push(c === '{' ? '}' : ']');
+    else if (c === '}' || c === ']') { stack.pop(); if (!stack.length) { end = j; break; } }
+  }
+  let cand = end >= 0 ? s.slice(0, end + 1) : s;
+  try { return JSON.parse(cand); } catch (e) {}
+  // truncated: close an open string, drop a dangling comma/partial key, seal
+  if (inStr) cand += '"';
+  cand = cand.replace(/,\s*$/, '').replace(/:\s*$/, ':null')
+    .replace(/,\s*"[^"]*$/, '');
+  for (let k = stack.length - 1; k >= 0; k--) cand += stack[k];
+  return JSON.parse(cand);
+};
 const CORS = { 'access-control-allow-origin': '*',
   'access-control-allow-methods': 'GET,POST,OPTIONS',
   'access-control-allow-headers': 'content-type' };
@@ -506,7 +530,7 @@ export class NonaAgent {
         // onboarding = fast tier + tight token budget (short structured turns,
         // first impression must feel instant); deep chat = quality tier, roomier
         const out = await llmChat(this.env, messages,
-          st.baru ? { maxTokens: 140, tier: 'wawancara' } : { maxTokens: 300 });
+          st.baru ? { maxTokens: 220, tier: 'wawancara' } : { maxTokens: 320 });
         const v = validAksara(jsonOut(out.text), st, !!b.buka);
         sql.exec('INSERT INTO episodic(role,text) VALUES(?,?)', 'nona', JSON.stringify(v));
         return json({ ...v, lane: out.lane });
