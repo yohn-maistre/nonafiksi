@@ -504,3 +504,52 @@ phone playtest of the live interview; judge qwen's voice vs GLM's when the
 queue clears (swap order is one line). Next waves queued: street generator
 (per-viewer plots, warung-top grammar, y-culling, gapura + directional wipe
 + auto-open mouths), halaman decoration + kotak surat.
+
+## 2026-07-13 (evening) — ONBOARDING POLISH + card v2 + HALAMAN
+
+From Yose's onboarding footage (7 screenshots). Three fixes + one feature.
+
+**Onboarding rebuilt (the wrong-buttons bug + latency).** Root cause of the
+nonsense options ("namaku rizal" as a button, vibe options while she asks for
+a link): the MODEL was generating the buttons. Fix = the client owns the
+funnel now. During onboarding the client renders deterministic affordances by
+phase (nama→link→vibe→quote→penutup) and the model only writes her line + a
+patch. It literally cannot emit a wrong button anymore. AND the client CAPTURES
+the data directly (name/link/quote), so the model's patch is a refinement, not
+a requirement — a weak fallback lane returning patch:null can no longer lose
+your answers. Client also normalizes URLs + infers link labels (IG/TikTok/X/
+YouTube/GitHub/Spotify). Live-drilled: name→{nama} patch, url handling, closing.
+
+**Latency.** Split the lane ladder into tiers. Onboarding = 'wawancara' tier
+that SKIPS GLM (its 524 wasted a 12s probe every turn) and leads qwen (reliable
+patches + good voice), gemini takes the lead once GOOGLE_API_KEY lands; llama-8b
+is last-resort (it's fast but can't hold patch-JSON — proven: returned patch:
+null and lost the name). Onboarding maxTokens 140→220 (140 truncated JSON
+mid-array = the macet). Buka latency measured 6.3s (was ~17s). Deep chat keeps
+quality-first order.
+
+**jsonOut hardened** — salvages truncated/prose-wrapped JSON (balanced-brace
+walk + repair: closes open string/brackets, drops dangling comma/partial key).
+7-case unit test green incl. the exact truncated-links failure.
+
+**Card v2** — framed avatar, terracotta @handle, optional quote line, "PINDAI
+ATAU KETIK" label, plain bio URL rendered, calmer footer. shareCard now copies
+the plain nonafiksi.pages.dev/@handle to clipboard + shows it in a note (for
+IG/X bios — the image QR isn't copyable).
+
+**HALAMAN (front-yard decoration)** — Yose: "decorate our lawns and front
+yard/porches." 5 new yard sprites (pagar, pot-bunga, bangku, kotak-surat,
+tiang-bendera) + reusable props (tanaman/batu/kucing). Editable via UBAH RUMAH
+→ HALAMAN (dense slot list, add/replace/remove, 6 petak), rendered beside the
+south house on the street via placeHomeOnStreet (_hal-tagged, re-injected each
+call). Worker whitelists (catalog 'halaman' tag + kucing/tanaman/batu) and
+sanitizes persona.halaman (≤6, filtered) — round-trip verified (illegal item
+dropped). New homes get a starter yard (kotak-surat + pot-bunga). Stored on
+persona (tiny), rides the existing save path.
+
+Designs teed up for Yose (in chat): personal AI in homes (penunggu rumah, 3
+rungs, aksara-cli guardrail), GitHub OAuth to replace the kunci (needs an OAuth
+App client_id+secret+callback), DB editing via dashboard/wrangler. NEXT WAVE:
+the warung-top downward-street generator (you near the top, walk down past your
+neighbors, gangs as a filter on that stream) — a world-layout change that wants
+Yose's screenshot-driven iteration, so it's its own wave.
