@@ -42,43 +42,66 @@ const wire = (api)=>{
       '(web/assets/SUMBER.md). QR: Project Nayuki (MIT). Font: Press Start 2P & VT323 (OFL). '+
       'Semua tokoh cerita adalah fiksi komposit. Dicetak hangat. ☕'}); };
 
-  // ---- kartu profil: QR + shareable card ----
+  // ---- kartu profil: QR + shareable card (a proper little press card) ----
+  const cardURL=(per)=>'nonafiksi.pages.dev/@'+per.handle;
+  const rr=(g,x,y,w,h,r)=>{ g.beginPath();
+    g.moveTo(x+r,y); g.arcTo(x+w,y,x+w,y+h,r); g.arcTo(x+w,y+h,x,y+h,r);
+    g.arcTo(x,y+h,x,y,r); g.arcTo(x,y,x+w,y,r); g.closePath(); };
   const makeCard=(per)=>{
-    const cv=document.createElement('canvas'); cv.width=384; cv.height=640;
+    const cv=document.createElement('canvas'); cv.width=384; cv.height=624;
     const g=cv.getContext('2d'); g.imageSmoothingEnabled=false;
-    g.fillStyle='#1a120d'; g.fillRect(0,0,384,640);
-    g.strokeStyle='#3a2a1c'; g.lineWidth=8; g.strokeRect(10,10,364,620);
-    g.fillStyle='#f2e8d5'; g.fillRect(24,24,336,592);
-    g.fillStyle='#303b7a'; g.fillRect(24,24,336,96);
+    // frame: kopi mount + kayu bevel + kertas face
+    g.fillStyle='#1a120d'; g.fillRect(0,0,384,624);
+    g.fillStyle='#2a1d14'; g.fillRect(12,12,360,600);
+    g.fillStyle='#3a2a1c'; g.fillRect(20,20,344,584);
+    g.fillStyle='#f2e8d5'; g.fillRect(28,28,328,568);
+    // tinta header band + avatar plate framed
+    g.fillStyle='#303b7a'; g.fillRect(28,28,328,120);
+    g.fillStyle='#4a57a8'; g.fillRect(28,142,328,6);      // ink seam
     const sh=api.sheet(api.state.playerSheet);
-    g.fillStyle='#f2e8d5'; g.fillRect(144,72,96,96);
-    g.strokeStyle='#1a120d'; g.lineWidth=4; g.strokeRect(144,72,96,96);
-    g.drawImage(sh,0,0,16,16,152,80,80,80);
+    g.fillStyle='#1a120d'; g.fillRect(150,60,84,84);
+    g.fillStyle='#f2e8d5'; g.fillRect(156,66,72,72);
+    g.drawImage(sh,0,0,16,16,160,70,64,64);
     g.textAlign='center';
+    // name + handle
     g.fillStyle='#1a120d'; g.font='20px PS2P,monospace';
-    g.fillText((per.nama||'TAMU').toUpperCase().slice(0,14),192,208);
-    g.fillStyle='#303b7a'; g.font='26px VT323,monospace';
-    g.fillText('@'+per.handle,192,236);
-    const url='https://nonafiksi.pages.dev/@'+per.handle;
+    g.fillText((per.nama||'TAMU').toUpperCase().slice(0,14),192,192);
+    g.fillStyle='#c4553b'; g.font='24px VT323,monospace';
+    g.fillText('@'+per.handle,192,220);
+    if(per.quote){ g.fillStyle='#5a4a34'; g.font='19px VT323,monospace';
+      g.fillText('“'+String(per.quote).slice(0,34)+'”',192,244); }
+    // QR on a white tile
+    const url='https://'+cardURL(per);
     const qr=qrcodegen.QrCode.encodeText(url,qrcodegen.QrCode.Ecc.MEDIUM);
-    const m=qr.size, px=Math.max(4,(240/m)|0), off=((384-m*px)/2)|0, top=262;
-    g.fillStyle='#ffffff'; g.fillRect(off-10,top-10,m*px+20,m*px+20);
+    const m=qr.size, px=Math.max(4,(212/m)|0), qs=m*px, off=((384-qs)/2)|0, top=262;
+    g.fillStyle='#ffffff'; rr(g,off-14,top-14,qs+28,qs+28,10); g.fill();
     g.fillStyle='#1a120d';
     for(let y=0;y<m;y++)for(let x=0;x<m;x++)
       if(qr.getModule(x,y))g.fillRect(off+x*px,top+y*px,px,px);
-    g.font='22px VT323,monospace'; g.fillStyle='#1a120d';
-    g.fillText(url.replace('https://',''),192,top+m*px+34);
-    g.font='9px PS2P,monospace'; g.fillStyle='#c4553b';
-    g.fillText('NONAFIKSI ✦ CERITA YANG DICETAK HANGAT',192,596);
+    // scan-or-type label + the plain URL (this is what goes in a bio)
+    g.fillStyle='#8a7a5c'; g.font='9px PS2P,monospace';
+    g.fillText('PINDAI ATAU KETIK',192,top+qs+34);
+    g.fillStyle='#303b7a'; g.font='22px VT323,monospace';
+    g.fillText(cardURL(per),192,top+qs+58);
+    // footer mark
+    g.fillStyle='#c4553b'; g.font='9px PS2P,monospace';
+    g.fillText('NONAFIKSI ✦ DICETAK HANGAT',192,584);
     return cv; };
-  const shareCard=(per)=>{ makeCard(per).toBlob(async b=>{
-    const f=new File([b],'nonafiksi-'+per.handle+'.png',{type:'image/png'});
-    if(navigator.canShare&&navigator.canShare({files:[f]})){
-      try{ await navigator.share({files:[f],title:'NonaFiksi',
-        text:'Rumahku di NonaFiksi ✦'}); return; }catch(e){} }
-    const a=document.createElement('a'); a.href=URL.createObjectURL(b);
-    a.download=f.name; document.body.appendChild(a); a.click(); a.remove();
-    setTimeout(()=>URL.revokeObjectURL(a.href),5000); }); };
+  const shareCard=(per)=>{
+    const url=cardURL(per);
+    try{ navigator.clipboard.writeText(url); }catch(e){}
+    makeCard(per).toBlob(async b=>{
+      const f=new File([b],'nonafiksi-'+per.handle+'.png',{type:'image/png'});
+      if(navigator.canShare&&navigator.canShare({files:[f]})){
+        try{ await navigator.share({files:[f],title:'NonaFiksi',
+          text:'Rumahku di NonaFiksi ✦ '+url}); return; }catch(e){} }
+      const a=document.createElement('a'); a.href=URL.createObjectURL(b);
+      a.download=f.name; document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(()=>URL.revokeObjectURL(a.href),5000);
+      // surface the plain link too — for IG/X bios (image QR isn't copyable)
+      api.popup({title:'KARTU & TAUTAN ✦',
+        body:'Kartumu tersimpan. Tautan rumahmu — '+url+' — sudah kusalin ke '+
+          'papan tempel; tempel saja di bio IG atau X-mu. ✦'}); }); };
 
   // ---- rumah ----
   const saveRumah = (p)=>{ let plan=null;
@@ -428,9 +451,11 @@ const wire = (api)=>{
   else AKSARA_LANE='mati';
   const SESI=()=>{ let s=localStorage.nf_sesi;
     if(!s){ s=crypto.randomUUID(); localStorage.nf_sesi=s; } return s; };
+  let ivPhase='nama'; // onboarding funnel step: nama→link→vibe→quote→penutup
   const AKSTATE=()=>{ const per=api.persona.get();
     return { baru:!per, nama:per&&per.nama, handle:per&&per.handle,
-      visits:+localStorage.nf_talks||0, jam:new Date().getHours(), fase:api.phase() }; };
+      visits:+localStorage.nf_talks||0, jam:new Date().getHours(), fase:api.phase(),
+      tahap:ivPhase }; };
   const TELEPON=[
     "Eh — sebentar, telepon dari percetakan. (Ia mengangkat gagang telepon tua, menjepitnya dengan bahu.) Jangan ke mana-mana. ☕",
     "Aduh, tunggu — kurir kertas datang di pintu belakang. Sebentar saja, jangan pergi dulu!",
@@ -471,18 +496,41 @@ const wire = (api)=>{
       {say:sayAkhir||"(Ia menutup buku catatannya.) Dengar itu? Mesin cetaknya menyala — rumahmu sedang DICETAK, halaman demi halaman. ✦"},
       {say:"Kuantar lewat jalan pintas penulis — lurus MENEMBUS halaman. Rumahmu juga di ujung selatan Jalan Kenangan, kalau mau pulang jalan kaki. ✦",
         action:()=>api.goto('rumah',72,190)}]); };
+  // Onboarding is a fixed funnel; the CLIENT owns the buttons (the model only
+  // writes her line + a patch). This kills the "example-answer-as-a-button" bug
+  // AND speeds turns up (she generates a sentence, not a menu). ivPhase = what
+  // she is asking for on THIS turn; ivSend advances it before the next call.
+  const ivSend=(pesan,next)=>{ ivPhase=next; kirim({pesan}); };
+  const ivVibe=(v)=>{ draftLLM.vibe=v; ivSend('rumahku '+v,'quote'); };
+  const ivAffordance=(step)=>{
+    if(ivPhase==='nama'){ step.input=true; step.placeholder='namamu…';
+      step.onfree=v=>ivSend(v,'link');
+      step.choices=[{label:'AKU SUDAH PUNYA RUMAH ✦',then:()=>{api.closeDlg();pulihkan();}}]; }
+    else if(ivPhase==='link'){ step.input=true; step.placeholder='https://…  (IG, toko, dst)';
+      step.onfree=v=>ivSend(v,'vibe');
+      step.choices=[{label:'BELUM ADA — LEWATI ✦',then:()=>ivSend('aku belum punya tautan','vibe')}]; }
+    else if(ivPhase==='vibe'){ step.choices=[
+      {label:'HANGAT — selimut & kopi',then:()=>ivVibe('hangat')},
+      {label:'RAPI — semua pada tempatnya',then:()=>ivVibe('rapi')},
+      {label:'RAMAI — tamu & tanaman',then:()=>ivVibe('ramai')}]; }
+    else if(ivPhase==='quote'){ step.input=true; step.placeholder='kutipan dinding…';
+      step.onfree=v=>ivSend(v,'penutup');
+      step.choices=[{label:'BIAR NONA YANG PILIH ✦',then:()=>ivSend('biar kamu yang pilih kutipannya','penutup')}]; }
+  };
   const render=(r,payload)=>{
     if(!r||r.macet||r.error)return gagal(payload);
     if(r.mati){ AKSARA_LANE='mati'; api.closeDlg(); return S.warung.onTalk(); }
     gagalN=0;
     if(r.tutup||r.sibuk)return api.runScript([{say:r.say||'Besok lagi ya. ☕'}]);
     const per=api.persona.get();
-    if(r.patch){ // the validator upstream already ruled; apply + persist
-      if(per){ Object.assign(per,r.patch); api.persona.set(per);
-        buildRumah(per); placeHomeOnStreet(); saveRumah(per).catch(()=>{}); }
-      else Object.assign(draftLLM,r.patch); }
-    if(r.done&&!per&&draftLLM.nama&&(draftLLM.links||[]).length)
-      return commitInterview({...draftLLM},r.say);
+    if(!per){ // ONBOARDING — client drives the funnel, options are deterministic
+      if(r.patch)Object.assign(draftLLM,r.patch);
+      if(ivPhase==='penutup')return commitInterview({...draftLLM},r.say);
+      const step={say:r.say}; ivAffordance(step);
+      return api.runScript([step],'NONA AKSARA'); }
+    // RETURNING — model-driven choices (validated + clamped upstream)
+    if(r.patch){ Object.assign(per,r.patch); api.persona.set(per);
+      buildRumah(per); placeHomeOnStreet(); saveRumah(per).catch(()=>{}); }
     const step={say:r.say};
     const ch=(r.choices||[]).map(c=>({label:c.label,then:()=>dispatch(c.value)}));
     if(ch.length)step.choices=ch;
@@ -494,7 +542,7 @@ const wire = (api)=>{
   S.warung.onTalk = ()=>{
     if(NF_API&&AKSARA_LANE!=='mati'){ // LIVE mode (unknown lane = still try)
       localStorage.nf_talks=(+localStorage.nf_talks||0)+1;
-      if(!api.persona.get())draftLLM={};
+      if(!api.persona.get()){ draftLLM={}; ivPhase='nama'; }
       return kirim({buka:true}); }
     const per = api.persona.get();
     if(!per){

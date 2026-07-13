@@ -41,23 +41,34 @@ const NIM_URL = 'https://integrate.api.nvidia.com/v1/chat/completions';
 // when its queue clears (breaker re-probes 90s); qwen3-next (3B active) did
 // ~17s; llama-8b (1.3s) is the never-dark floor. Gemini slots in above the
 // floor once GOOGLE_API_KEY lands.
-const LANES = (env) => [
-  env.NIM_API_KEY && { lane: 'nim', tms: 12000,
-    url: NIM_URL, key: env.NIM_API_KEY, model: 'z-ai/glm-5.2' },
-  env.NIM_API_KEY && { lane: 'nim-qwen', tms: 35000,
-    url: NIM_URL, key: env.NIM_API_KEY, model: 'qwen/qwen3-next-80b-a3b-instruct' },
-  env.GOOGLE_API_KEY && { lane: 'gemini', tms: 30000,
-    url: 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',
-    key: env.GOOGLE_API_KEY, model: 'gemini-2.5-flash' },
-  env.NIM_API_KEY && { lane: 'nim-kilat', tms: 12000,
-    url: NIM_URL, key: env.NIM_API_KEY, model: 'meta/llama-3.1-8b-instruct' },
-].filter(Boolean);
+// Each lane carries q (quality rank, lower=better) and s (speed rank). The
+// 'cepat' tier (onboarding — short structured turns, first impression must
+// feel instant) sorts by speed; default (deep chat — her voice matters most)
+// sorts by quality. gemini-flash ranks high in BOTH, so it leads once its key
+// lands. GLM-5.2 524s at peak → short probe + 90s breaker; it reclaims the mic
+// when its queue clears.
+const LANES = (env, tier) => {
+  const all = [
+    env.NIM_API_KEY && { lane: 'nim', tms: 12000, q: 1, s: 5,
+      url: NIM_URL, key: env.NIM_API_KEY, model: 'z-ai/glm-5.2' },
+    env.NIM_API_KEY && { lane: 'nim-qwen', tms: 35000, q: 2, s: 3,
+      url: NIM_URL, key: env.NIM_API_KEY, model: 'qwen/qwen3-next-80b-a3b-instruct' },
+    env.GOOGLE_API_KEY && { lane: 'gemini', tms: 30000, q: 2, s: 1,
+      url: 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',
+      key: env.GOOGLE_API_KEY, model: 'gemini-2.5-flash' },
+    env.NIM_API_KEY && { lane: 'nim-kilat', tms: 12000, q: 4, s: 2,
+      url: NIM_URL, key: env.NIM_API_KEY, model: 'meta/llama-3.1-8b-instruct' },
+  ].filter(Boolean);
+  return tier === 'cepat'
+    ? all.sort((a, b) => a.s - b.s || a.q - b.q)
+    : all.sort((a, b) => a.q - b.q || a.s - b.s);
+};
 // circuit breaker (per-isolate): a lane that just failed rests 90s so a dead
 // NIM queue doesn't tax every message with a full timeout before the fallback
 const DOWN = new Map();
 async function llmChat(env, messages, opts = {}) {
   let err = new Error('tanpa kunci');
-  for (const L of LANES(env)) {
+  for (const L of LANES(env, opts.tier)) {
     if ((DOWN.get(L.lane) || 0) > Date.now()) { err = new Error(L.lane + ' istirahat'); continue; }
     try {
       const ctl = new AbortController();
@@ -379,9 +390,21 @@ const sysAksara = (st) => {
     ? 'Tamu di depanmu BELUM TERCATAT — belum punya rumah di NonaFiksi.'
     : `Tamu lama: ${String(st.nama || '?').slice(0, 24)} (@${String(st.handle || '?')
         .slice(0, 24)}), kunjungan ke-${(+st.visits || 0) + 1}.`;
+  const TANYA = {
+    nama: 'tanyakan nama panggilannya.',
+    link: 'minta SATU tautan yang paling mewakili dirinya (IG, toko, portofolio, apa saja).',
+    vibe: 'tanyakan suasana rumah yang ia mau: hangat, rapi, atau ramai.',
+    quote: 'minta satu kalimat/kutipan untuk dinding rumahnya (boleh ia lewati).',
+    penutup: 'TUTUP dengan hangat dan dramatis: kau menutup buku catatan, mesin cetak menyala, rumahnya sedang dicetak halaman demi halaman. Sambut ia masuk.',
+  };
+  const tahap = TANYA[st.tahap] ? st.tahap : 'nama';
   const tugas = st.baru
-    ? `TUGAS: wawancarai tamu baru dengan hangat, SATU pertanyaan per giliran, sampai lengkap: (1) nama panggilan; (2) 1-3 tautan tentang dirinya (portofolio/IG/toko — minta url-nya); (3) suasana rumah: hangat (selimut & kopi) / rapi / ramai; (4) opsional satu kutipan untuk dinding. Setiap dapat jawaban, KIRIM patch berisi field itu. Setelah nama + minimal satu tautan + vibe terkumpul → giliran penutup: say dramatis (kau menutup buku catatan, mesin cetak menyala, rumahnya sedang DICETAK halaman demi halaman), patch berisi SEMUA data, done:true. Kalau tamu bilang sudah pernah punya rumah → beri choice {"label":"AKU BAWA KUNCI","value":"#kunci"}.`
-    : `TUGAS: temani tamu lama. Sekarang jam ${jam} (${String(st.fase || '?').slice(0, 8)}). Sapa sesuai konteks (malam-malam masih di sini? sering mampir? lama tak muncul?). Kau boleh: bergosip warung (ada tamu berjas licin yang ceritanya kau simpan di laci — kalau ia penasaran, tawarkan #oligarki), mendengarkan curhat (tanggapi hangat dan SPESIFIK terhadap ceritanya, jangan menggurui), menawarkan #ubah atau #kartu. Kalau tamu minta ganti nama/tautan/suasana/kutipan → konfirmasi singkat lalu KIRIM patch-nya. Pesan "(tamu masuk warung)" = giliran pembuka: sapaan segar 1-2 kalimat + choices standar: KABAR WARUNG? / AKU MAU CERITA / UBAH RUMAH ✦ (value "#ubah") / Cuma mampir ☕ (value "#pergi").`;
+    // Onboarding: the WARUNG draws the buttons (client-owned, always correct),
+    // so she must NOT invent choices — just one warm line + a patch. This kills
+    // the "example-answer-as-a-button" bug and keeps turns short/fast.
+    ? `TUGAS: kau sedang menuliskan tamu BARU jadi warga. Bicaralah HANGAT & SANGAT SINGKAT (maks 2 kalimat pendek). Dari pesan terakhir tamu, EKSTRAK yang bisa jadi patch: sebuah nama→patch{"nama"}, sebuah tautan→patch{"links":[{"label","url"}]}, sebuah kutipan→patch{"quote"}. Lalu ${TANYA[tahap]}
+JANGAN pernah menuliskan "choices" — tombol sudah disediakan warung. JANGAN mengulang yang sudah dijawab. JANGAN menaruh contoh jawaban sebagai pilihan.`
+    : `TUGAS: temani tamu lama. Sekarang jam ${jam} (${String(st.fase || '?').slice(0, 8)}). Sapa sesuai konteks (malam-malam masih di sini? sering mampir? lama tak muncul?). Kau boleh: bergosip warung (ada tamu berjas licin yang ceritanya kau simpan di laci — kalau ia penasaran, tawarkan #oligarki), mendengarkan curhat (tanggapi hangat dan SPESIFIK terhadap ceritanya, jangan menggurui), menawarkan #ubah atau #kartu. Kalau tamu minta ganti nama/tautan/suasana/kutipan → konfirmasi singkat lalu KIRIM patch-nya. Pesan "(tamu masuk warung)" = giliran pembuka: sapaan segar 1-2 kalimat + choices standar: KABAR WARUNG? / AKU MAU CERITA / UBAH RUMAH ✦ (value "#ubah") / Cuma mampir ☕ (value "#pergi"). SETIAP choice harus AKSI yang jelas (kalimat yang diucapkan tamu atau perintah), BUKAN contoh jawaban.`;
   return `Kamu NONA AKSARA — penjaga warung kopi sekaligus percetakan NonaFiksi, kampung pixel tempat tiap orang punya rumah kecil yang juga halaman tautannya (alamat @handle, bisa dikunjungi siapa saja). Kepribadian: hangat, jeli, sedikit jahil, gemar mencatat cerita orang di buku catatan; bahasa Indonesia santai (aku–kau); akrab dengan kopi, mesin cetak, laci cerita. Kau BUKAN asisten/AI — kau Nona Aksara, penjaga tempat ini.
 DUNIA: Jalan Kenangan (rumah para warga), gang komunitas (penulis/musisi/kreator/dev/pedagang/perantau), buku tamu di tiap rumah, kartu profil ber-QR, kunci rumah (rahasia pemilik). Cerita interaktif "Tamu Berjas" (fiksi komposit) = #oligarki.
 ${who}
@@ -475,7 +498,10 @@ export class NonaAgent {
         ...hist.map(h => ({ role: h.role === 'nona' ? 'assistant' : 'user',
           content: h.text }))];
       try {
-        const out = await llmChat(this.env, messages, { maxTokens: 320 });
+        // onboarding = fast tier + tight token budget (short structured turns,
+        // first impression must feel instant); deep chat = quality tier, roomier
+        const out = await llmChat(this.env, messages,
+          st.baru ? { maxTokens: 140, tier: 'cepat' } : { maxTokens: 300 });
         const v = validAksara(jsonOut(out.text), st, !!b.buka);
         sql.exec('INSERT INTO episodic(role,text) VALUES(?,?)', 'nona', JSON.stringify(v));
         return json({ ...v, lane: out.lane });
