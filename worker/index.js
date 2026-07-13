@@ -47,21 +47,26 @@ const NIM_URL = 'https://integrate.api.nvidia.com/v1/chat/completions';
 // sorts by quality. gemini-flash ranks high in BOTH, so it leads once its key
 // lands. GLM-5.2 524s at peak → short probe + 90s breaker; it reclaims the mic
 // when its queue clears.
+// q = quality rank, s = speed rank, iv = onboarding rank (lower=first). The
+// 'wawancara' tier (onboarding) SKIPS GLM to the back: its 524 wastes a 12s
+// probe and llama-8b can't hold the patch-JSON discipline, so qwen leads
+// (reliable patches + good voice), gemini takes over once its key lands.
+// Default (deep chat) is quality-first; GLM reclaims the mic when free.
 const LANES = (env, tier) => {
   const all = [
-    env.NIM_API_KEY && { lane: 'nim', tms: 12000, q: 1, s: 5,
+    env.NIM_API_KEY && { lane: 'nim', tms: 12000, q: 1, s: 5, iv: 4,
       url: NIM_URL, key: env.NIM_API_KEY, model: 'z-ai/glm-5.2' },
-    env.NIM_API_KEY && { lane: 'nim-qwen', tms: 35000, q: 2, s: 3,
+    env.NIM_API_KEY && { lane: 'nim-qwen', tms: 35000, q: 2, s: 3, iv: 2,
       url: NIM_URL, key: env.NIM_API_KEY, model: 'qwen/qwen3-next-80b-a3b-instruct' },
-    env.GOOGLE_API_KEY && { lane: 'gemini', tms: 30000, q: 2, s: 1,
+    env.GOOGLE_API_KEY && { lane: 'gemini', tms: 30000, q: 2, s: 1, iv: 1,
       url: 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',
       key: env.GOOGLE_API_KEY, model: 'gemini-2.5-flash' },
-    env.NIM_API_KEY && { lane: 'nim-kilat', tms: 12000, q: 4, s: 2,
+    env.NIM_API_KEY && { lane: 'nim-kilat', tms: 12000, q: 4, s: 2, iv: 3,
       url: NIM_URL, key: env.NIM_API_KEY, model: 'meta/llama-3.1-8b-instruct' },
   ].filter(Boolean);
-  return tier === 'cepat'
-    ? all.sort((a, b) => a.s - b.s || a.q - b.q)
-    : all.sort((a, b) => a.q - b.q || a.s - b.s);
+  if (tier === 'wawancara') return all.sort((a, b) => a.iv - b.iv);
+  if (tier === 'cepat') return all.sort((a, b) => a.s - b.s || a.q - b.q);
+  return all.sort((a, b) => a.q - b.q || a.s - b.s);
 };
 // circuit breaker (per-isolate): a lane that just failed rests 90s so a dead
 // NIM queue doesn't tax every message with a full timeout before the fallback
@@ -501,7 +506,7 @@ export class NonaAgent {
         // onboarding = fast tier + tight token budget (short structured turns,
         // first impression must feel instant); deep chat = quality tier, roomier
         const out = await llmChat(this.env, messages,
-          st.baru ? { maxTokens: 140, tier: 'cepat' } : { maxTokens: 300 });
+          st.baru ? { maxTokens: 140, tier: 'wawancara' } : { maxTokens: 300 });
         const v = validAksara(jsonOut(out.text), st, !!b.buka);
         sql.exec('INSERT INTO episodic(role,text) VALUES(?,?)', 'nona', JSON.stringify(v));
         return json({ ...v, lane: out.lane });
